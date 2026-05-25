@@ -33,5 +33,16 @@ export default route(function (/* { store, ssrContext } */) {
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
 
+  Router.beforeEach((to, from, next) => {
+    // Giả định chúng ta lưu token trong localStorage
+    const isAuthenticated = localStorage.getItem('authToken');
+
+    if (to.path !== '/login' && !isAuthenticated) {
+      next('/login');
+    } else {
+      next();
+    }
+  });
+
   return Router;
 });

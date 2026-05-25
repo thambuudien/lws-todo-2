@@ -1,8 +1,17 @@
 const routes = [
   {
+    path: '/login',
+    component: () => import('pages/LoginPage.vue'),
+  },
+  {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
+    // meta: { requiresAuth: true }, // Sẽ dùng sau để bảo vệ route
+    children: [
+      { path: '', component: () => import('pages/IndexPage.vue') },
+      { path: 'customers', component: () => import('pages/CustomersPage.vue') },
+      { path: 'policies', component: () => import('pages/PoliciesPage.vue') },
+    ],
   },
 
   // Always leave this as last one,
