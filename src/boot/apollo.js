@@ -1,21 +1,111 @@
-import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client/core';
-import { setContext } from '@apollo/client/link/context';
-import { boot } from 'quasar/wrappers';
-import { provide } from 'vue';
-import { DefaultApolloClient } from '@vue/apollo-composable';
+import {
+  ApolloClient,
+  createHttpLink,
+  InMemoryCache,
+  from,
+  Observable,
+} from "@apollo/client/core";
+import { setContext } from "@apollo/client/link/context";
+import { onError } from "@apollo/client/link/error";
+import { provideApolloClient } from "@vue/apollo-composable";
+import { boot } from "quasar/wrappers";
 
+import moment from "moment";
+import "moment/locale/vi";
+
+moment.locale("vi");
+
+// HTTP connection to the API
 const httpLink = createHttpLink({
-  uri: process.env.GRAPHQL_URI,
+  uri: "https://longwebstudio.io.vn/wordpress/5ryt3z3skdlf",
 });
 
+const errorLink = onError(
+  ({ graphQLErrors, networkError, operation, forward }) => {
+    if (graphQLErrors) {
+      for (let err of graphQLErrors) {
+        // Check for multiple token expiration error formats
+        if (
+          err.extensions.code === "jwt_auth_expired_token" ||
+          err.extensions.code === "jwt_auth_invalid_token" ||
+          (err.extensions.debugMessage &&
+            err.extensions.debugMessage.includes("Expired token"))
+        ) {
+          return new Observable((observer) => {
+            const refreshToken = localStorage.getItem("refreshToken");
+            if (!refreshToken) {
+              localStorage.removeItem("authToken");
+              window.location.href = "/#/auth";
+              observer.error(err);
+              return;
+            }
+
+            // Use fetch for the refresh token mutation to avoid an infinite loop
+            fetch("https://longwebstudio.io.vn/wordpress/5ryt3z3skdlf", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                query: `
+                mutation RefreshToken($refreshToken: String!) {
+                  refreshJwtAuthToken(input: { jwtRefreshToken: $refreshToken }) {
+                    authToken
+                  }
+                }
+              `,
+                variables: {
+                  refreshToken: refreshToken,
+                },
+              }),
+            })
+              .then((res) => res.json())
+              .then((result) => {
+                if (result.errors) {
+                  throw new Error(result.errors[0].message);
+                }
+                const newAuthToken = result.data.refreshJwtAuthToken.authToken;
+                localStorage.setItem("authToken", newAuthToken);
+
+                const oldHeaders = operation.getContext().headers;
+                operation.setContext({
+                  headers: {
+                    ...oldHeaders,
+                    authorization: `Bearer ${newAuthToken}`,
+                  },
+                });
+
+                forward(operation).subscribe({
+                  next: observer.next.bind(observer),
+                  error: observer.error.bind(observer),
+                  complete: observer.complete.bind(observer),
+                });
+              })
+              .catch((error) => {
+                localStorage.removeItem("authToken");
+                localStorage.removeItem("refreshToken");
+                window.location.href = "/#/auth";
+                observer.error(error);
+              });
+          });
+        }
+      }
+    }
+
+    if (networkError) {
+      console.log(`[Network error]: ${networkError}`);
+    }
+  }
+);
+
+// Middleware for authentication
 const authLink = setContext((_, { headers }) => {
-  // Lấy token từ localStorage
-  const token = localStorage.getItem('authToken');
-  // Trả về headers với token nếu có
+  const token = localStorage.getItem("authToken");
   return {
     headers: {
       ...headers,
-      authorization: token ? `Bearer ${token}` : '',
+      authorization: token ? `Bearer ${token}` : "",
+      "lws-secret-token": "LongWebStudio_GraphQL_Secure_Key_2026",
     },
   };
 });
@@ -23,10 +113,12 @@ const authLink = setContext((_, { headers }) => {
 const cache = new InMemoryCache();
 
 const apolloClient = new ApolloClient({
-  link: authLink.concat(httpLink),
+  link: from([errorLink, authLink, httpLink]),
   cache,
 });
 
 export default boot(({ app }) => {
-  app.provide(DefaultApolloClient, apolloClient);
+  provideApolloClient(apolloClient);
 });
+
+export { apolloClient };
