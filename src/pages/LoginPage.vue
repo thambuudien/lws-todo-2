@@ -73,11 +73,11 @@ export default {
     const submitForm = async () => {
       try {
         const result = await login();
-        const { authToken, refreshToken, name } = result.data.login;
+        const { authToken, refreshToken, user } = result.data.login;
         // Store the token (e.g., in localStorage) and redirect
         localStorage.setItem("authToken", authToken);
         localStorage.setItem("refreshToken", refreshToken);
-        localStorage.setItem("currentUserName", name);
+        localStorage.setItem("currentUserName", user.name);
         router.push("/");
       } catch (e) {
         console.error("Login failed:", e);
