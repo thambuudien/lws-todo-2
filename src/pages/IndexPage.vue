@@ -1,18 +1,22 @@
 <template>
   <q-page class="q-pa-md bg-grey-2">
-    <!-- KHỐI 4 THẺ KPI ĐỘNG THỐNG KÊ -->
+    <!-- KHỐI 4 THÈ KPI ĐỘNG THỐNG KÊ CHIẾN DỊCH MẢNG GỐC -->
     <KPIStats :rows="rawRows || []" />
 
-    <!-- THANH TÌM KIẾM TỰ ĐỘNG GÕ TÌM NGAY (INSTANT SEARCH) -->
+    <!-- THANH TÌM KIẾM HỖN HỢP TÍCH HỢP CHECKBOX LỌC KẾT HỢP -->
     <FilterBar @search="handleLocalSearch" @addNew="openAddDialog" />
 
     <!-- THANH ĐIỀU HƯỚNG BỘ LỌC NGHIỆP VỤ (TỐI ƯU MOBILE CLICK) -->
     <div class="q-mb-md">
       <div class="text-caption text-grey-7 text-weight-bold q-mb-xs">
         BỘ LỌC CHIẾN DỊCH VẬN ĐỘNG
+        <span class="text-green-9" v-if="onlyBhxhFilter">
+          (ĐANG ĐIỀU HƯỚNG THEO HẠN BHXH)</span
+        >
+        <span class="text-purple" v-else> (ĐANG ĐIỀU HƯỚNG THEO HẠN BHYT)</span>
       </div>
       <div class="row q-col-gutter-xs">
-        <div class="col-4">
+        <div class="col-3">
           <q-btn
             :outline="activeFilter !== 'ALL'"
             unelevated
@@ -20,12 +24,12 @@
             dense
             size="sm"
             color="primary"
-            class="full-width"
+            class="full-width font-11"
             label="Tất cả hộ"
             @click="activeFilter = 'ALL'"
           />
         </div>
-        <div class="col-4">
+        <div class="col-3">
           <q-btn
             :outline="activeFilter !== 'CAN_GIA_HAN'"
             unelevated
@@ -33,12 +37,12 @@
             dense
             size="sm"
             color="purple-7"
-            class="full-width"
+            class="full-width font-11"
             label="Cần gia hạn"
             @click="activeFilter = 'CAN_GIA_HAN'"
           />
         </div>
-        <div class="col-4">
+        <div class="col-3">
           <q-btn
             :outline="activeFilter !== 'QUA_HAN_90'"
             unelevated
@@ -46,15 +50,28 @@
             dense
             size="sm"
             color="negative"
-            class="full-width"
+            class="full-width font-11"
             label="Quá hạn > 90 ngày"
             @click="activeFilter = 'QUA_HAN_90'"
+          />
+        </div>
+        <div class="col-3">
+          <q-btn
+            :outline="activeFilter !== 'CHUA_THE'"
+            unelevated
+            no-caps
+            dense
+            size="sm"
+            color="indigo-7"
+            class="full-width font-11"
+            label="Chưa có thẻ"
+            @click="activeFilter = 'CHUA_THE'"
           />
         </div>
       </div>
     </div>
 
-    <!-- THANH TRẠNG THÁI NGUỒN DỮ LIỆU -->
+    <!-- THANH TRẠNG THÁI NGUỒN DỮ LIỆU & ĐÈN BÁO CACHE -->
     <div class="row items-center justify-between q-mb-sm q-px-xs">
       <div class="text-caption text-indigo text-weight-bold row items-center">
         <q-badge
@@ -64,19 +81,29 @@
         />
         <span>{{
           isDataFromCache
-            ? "Dữ liệu lưu tạm (Offline)"
-            : "Dữ liệu đồng bộ trực tuyến"
+            ? "Hiển thị dữ liệu lưu tạm (Offline)"
+            : "Dữ liệu đồng bộ trực tuyến mới nhất"
         }}</span>
-        <span v-if="searchText" class="text-grey-8 q-ml-xs"
-          >(Khớp: {{ filteredRows.length }})</span
-        >
+        <span class="text-grey-8 q-ml-sm">
+          (Đang hiển thị: {{ filteredRows.length }} hồ sơ)
+        </span>
       </div>
+      <q-btn
+        v-if="activeFilter !== 'ALL' || searchText || onlyBhxhFilter"
+        label="Xóa toàn bộ bộ lọc"
+        size="xs"
+        color="grey-7"
+        unelevated
+        dense
+        no-caps
+        @click="clearAllFilters"
+      />
     </div>
 
     <!-- DANH SÁCH THẺ DI ĐỘNG PWA (MOBILE CARD LIST) -->
     <MainTable :rows="filteredRows" :loading="loading" @edit="openEditDialog" />
 
-    <!-- BIỂU MẪU DIALOG 29 TRƯỜNG -->
+    <!-- BIỂU MẪU DIALOG 29 TRƯỜNG NGHIỆP VỤ -->
     <FormDialog
       v-model="formDialog"
       :formData="selectedForm"
@@ -103,79 +130,94 @@ import MainTable from "./components/MainTable.vue";
 import FormDialog from "./components/FormDialog.vue";
 
 const $q = useQuasar();
-const HOM_NAY = moment("2026-10-11"); // Định vị thời gian thực tế hiện tại
+const HOM_NAY = moment("2026-10-12"); // Đồng bộ theo mốc thời gian thực tế hệ thống [CONTEXT]
 
-const rawRows = ref();
-const activeFilter = ref("ALL"); // Các trạng thái: ALL, CAN_GIA_HAN, QUA_HAN_90
+const rawRows = ref([]);
+const activeFilter = ref("ALL");
 const loading = ref(false);
 const submitLoading = ref(false);
 const formDialog = ref(false);
 const selectedForm = ref({});
 const isDataFromCache = ref(false);
 
-const searchMode = ref("exact");
+// Biến lưu trữ trạng thái bộ lọc từ FilterBar bắn về
 const searchText = ref("");
+const onlyBhxhFilter = ref(false);
 
 /**
- * ⚡ BỘ LỌC CHỒNG ĐA TẦNG CỤC BỘ (RAM FILTERING)
+ * ⚡ THUẬT TOÁN KẾT HỢP ĐA TẦNG CỤC BỘ (RAM COMPUTED)
+ * Tự động chuyển đổi trục ngày hết hạn xoay quanh BHYT hoặc BHXH dựa vào Checkbox
  */
 const filteredRows = computed(() => {
-  if (!rawRows.value) return;
+  if (!rawRows.value || !Array.isArray(rawRows.value)) return [];
 
-  // Mốc 1: Tính toán ngày ranh giới quá hạn 90 ngày (11/10/2026 trừ 90 ngày = 13/07/2026)
   const mocQuaHan90Ngay = moment(HOM_NAY).subtract(90, "days");
-
-  // Mốc 2: Ngày cuối cùng của tháng tiếp theo (Tháng 10 -> Tháng 11/2026 -> Cuối tháng là 30/11/2026)
   const mocCuoiThangTiepTheo = moment(HOM_NAY).add(1, "month").endOf("month");
 
-  // BƯỚC 1: LỌC THEO CHIẾN DỊCH THỜI GIAN NGHIỆP VỤ BHYT
+  // BƯỚC 1: LỌC THEO CHIẾN DỊCH THỜI GIAN VÀ PHÂN HỆ ĐIỀU HƯỚNG
   let result = rawRows.value.filter((item) => {
-    if (activeFilter.value === "ALL") return true;
-    if (!item.bhytDenNgay) return false;
+    // Nếu tích chọn checkbox, loại ngay những người chưa từng tham gia/rỗng cột ngày BHXH
+    if (
+      onlyBhxhFilter.value &&
+      (!item.bhxhDenNgay || item.bhxhDenNgay.trim() === "")
+    ) {
+      return false;
+    }
 
-    const hanBhy = moment(item.bhytDenNgay, "YYYY-MM-DD");
+    if (activeFilter.value === "ALL") return true;
+
+    if (activeFilter.value === "CHUA_THE") {
+      return (
+        item.tinhTrangHanThe === "CHUA_CO_THE" ||
+        !item.maSoTheBhyt ||
+        item.maSoTheBhyt.trim() === ""
+      );
+    }
+
+    // 🧩 BIẾN ĐỘNG TRỤC THỜI GIAN: Tự động đổi trường kiểm tra dựa vào checkbox combo
+    const ngayKiemTraStr = onlyBhxhFilter.value
+      ? item.bhxhDenNgay
+      : item.bhytDenNgay;
+    if (!ngayKiemTraStr) return false;
+
+    const mốcHạnBảoHiểm = moment(ngayKiemTraStr, "YYYY-MM-DD");
 
     if (activeFilter.value === "QUA_HAN_90") {
-      // Điều kiện 1: Đã hết hạn quá 90 ngày
-      return hanBhy.isBefore(mocQuaHan90Ngay);
+      return mốcHạnBảoHiểm.isBefore(mocQuaHan90Ngay);
     }
 
     if (activeFilter.value === "CAN_GIA_HAN") {
-      // Điều kiện 2: Hết hạn chưa quá 90 ngày VÀ trước ngày cuối tháng tiếp theo
       return (
-        hanBhy.isSameOrAfter(mocQuaHan90Ngay) &&
-        hanBhy.isSameOrBefore(mocCuoiThangTiepTheo)
+        mốcHạnBảoHiểm.isSameOrAfter(mocQuaHan90Ngay) &&
+        mốcHạnBảoHiểm.isSameOrBefore(mocCuoiThangTiepTheo)
       );
     }
 
     return true;
   });
 
-  // BƯỚC 2: TỰ ĐỘNG LỌC CHỒNG THEO TỪ KHÓA TRÊN Ô GÕ TEXT CHỮ (TÌM KIẾM TỨC THÌ)
+  // BƯỚC 2: LỌC TỰ ĐỘNG THEO TỪ KHÓA TRÊN Ô GÕ TEXT CHỮ (TÌM KIẾM TỨC THÌ)
   const txt = searchText.value.trim().toLowerCase();
   if (txt !== "") {
     result = result.filter((item) => {
-      if (searchMode.value === "exact") {
-        return item.maSoBhxh === txt;
-      } else {
-        const nameMatch = item.hoTen
-          ? item.hoTen.toLowerCase().includes(txt)
-          : false;
-        const phoneMatch = item.soDienThoai
-          ? item.soDienThoai.includes(txt)
-          : false;
-        const cccdMatch = item.maSoBhxh ? item.maSoBhxh.includes(txt) : false;
-        return nameMatch || phoneMatch || cccdMatch;
-      }
+      const nameMatch = item.hoTen
+        ? item.hoTen.toLowerCase().includes(txt)
+        : false;
+      const phoneMatch = item.soDienThoai
+        ? item.soDienThoai.includes(txt)
+        : false;
+      const cccdMatch = item.maSoBhxh ? item.maSoBhxh.includes(txt) : false;
+      return nameMatch || phoneMatch || cccdMatch;
     });
   }
 
   return result;
 });
 
-const handleLocalSearch = ({ mode, text }) => {
-  searchMode.value = mode;
-  searchText.value = text || "";
+// Nhận gộp gói dữ liệu filter truyền từ FilterBar
+const handleLocalSearch = ({ text, onlyBhxh }) => {
+  searchText.value = text;
+  onlyBhxhFilter.value = onlyBhxh;
 };
 
 const fetchData = async () => {
@@ -183,26 +225,40 @@ const fetchData = async () => {
   try {
     const res = await apolloClient.query({
       query: GET_DANH_SACH_BHYT,
-      fetchPolicy: "cache-first",
+      fetchPolicy: "network-only", // Dùng network-only để ép gọi server lấy mới nhất khi có mạng
     });
 
     rawRows.value = res.data.traCuuBHYT || [];
     isDataFromCache.value = false;
+
+    // LƯU DỰ PHÒNG: Ghi vào localStorage để phòng hờ F5 hoặc mất mạng lần sau
+    localStorage.setItem("cached_bhyt_list", JSON.stringify(rawRows.value));
   } catch (err) {
-    console.warn("Mất kết nối mạng, đang tải từ cache cục bộ...", err);
+    console.warn("Mất kết nối mạng, đang chuyển sang dữ liệu dự phòng...", err);
     isDataFromCache.value = true;
 
-    // Đọc cache không cần truyền variables
+    // Ưu tiên 1: Đọc thử từ Apollo InMemoryCache trước
     try {
-      const cachedData = apolloClient.readQuery({
-        query: GET_DANH_SACH_BHYT,
-      });
-
+      const cachedData = apolloClient.readQuery({ query: GET_DANH_SACH_BHYT });
       if (cachedData && cachedData.traCuuBHYT) {
         rawRows.value = cachedData.traCuuBHYT;
+        return;
       }
-    } catch (cacheErr) {
-      console.error("Cache trống:", cacheErr);
+    } catch (e) {
+      // Bỏ qua nếu Apollo cache trống
+    }
+
+    // Ưu tiên 2: Fallback tuyệt đối bằng localStorage (An toàn 100% khi F5 mất mạng)
+    const localBackup = localStorage.getItem("cached_bhyt_list");
+    if (localBackup) {
+      try {
+        rawRows.value = JSON.parse(localBackup);
+        console.log("Đã khôi phục dữ liệu từ localStorage dự phòng.");
+      } catch (parseErr) {
+        console.error("Lỗi giải mã dữ liệu dự phòng:", parseErr);
+        rawRows.value = [];
+      }
+    } else {
       rawRows.value = [];
     }
   } finally {
@@ -212,36 +268,54 @@ const fetchData = async () => {
 
 const handleSave = async (formData) => {
   submitLoading.value = true;
-  const { id, ...payload } = formData;
   try {
-    if (id) {
+    if (formData.id) {
       await apolloClient.mutate({
         mutation: UPDATE_KHACH_HANG_BHYT,
-        variables: { id, ...payload },
+        variables: { id: formData.id, ...formData },
       });
     } else {
       await apolloClient.mutate({
         mutation: UPSERT_KHACH_HANG_BHYT,
-        variables: payload,
+        variables: formData,
       });
     }
     $q.notify({
       color: "positive",
-      message: "Đồng bộ dữ liệu thành công!",
+      message: "Đồng bộ cơ sở dữ liệu thành công!",
       icon: "cloud_done",
     });
     formDialog.value = false;
     fetchData();
   } catch (err) {
-    $q.notify({ color: "negative", message: err.message });
-  }
-  military: {
+    $q.notify({
+      color: "negative",
+      message: err.message || "Lỗi lưu dữ liệu.",
+    });
+  } finally {
     submitLoading.value = false;
   }
 };
 
+const clearAllFilters = () => {
+  activeFilter.value = "ALL";
+  searchText.value = "";
+  onlyBhxhFilter.value = false;
+  $q.notify({
+    message: "Đã thiết lập lại toàn bộ bộ lọc mặc định.",
+    color: "grey-8",
+    timeout: 1000,
+  });
+};
+
 const openAddDialog = () => {
-  selectedForm.value = { id: null, maSoBhxh: "", hoTen: "" };
+  selectedForm.value = {
+    id: null,
+    maSoBhxh: "",
+    hoTen: "",
+    gioiTinh: null,
+    tinhTrangHanThe: "CON_HAN",
+  };
   formDialog.value = true;
 };
 const openEditDialog = (item) => {
@@ -255,5 +329,8 @@ onMounted(() => fetchData());
 <style scoped>
 .full-width {
   width: 100%;
+}
+.font-11 {
+  font-size: 11px;
 }
 </style>

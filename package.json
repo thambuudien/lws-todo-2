@@ -1,6 +1,6 @@
 {
-  "name": "quasar-starter",
-  "description": "A Quasar CLI with Vite starter project.",
+  "name": "so-thu-bhxh-bhyt",
+  "description": "Sổ thu BHXH, BHYT nhắc tái tục.",
   "private": true,
   "scripts": {
     "dev": "npx update-browserslist-db@latest && quasar dev",
