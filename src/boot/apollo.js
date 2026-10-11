@@ -117,16 +117,29 @@ const cache = new InMemoryCache({
   typePolicies: {
     Query: {
       fields: {
-        // Tùy chọn cách merge dữ liệu nếu bạn dùng tính năng phân trang (pagination) sau này
         traCuuBHYT: {
           merge(existing, incoming) {
-            return incoming
-          }
-        }
-      }
-    }
-  }
-})
+            return incoming;
+          },
+        },
+      },
+    },
+  },
+});
+// const cache = new InMemoryCache({
+//   typePolicies: {
+//     Query: {
+//       fields: {
+//         // Tùy chọn cách merge dữ liệu nếu bạn dùng tính năng phân trang (pagination) sau này
+//         traCuuBHYT: {
+//           merge(existing, incoming) {
+//             return incoming
+//           }
+//         }
+//       }
+//     }
+//   }
+// })
 
 // const apolloClient = new ApolloClient({
 //   link: from([errorLink, authLink, httpLink]),
@@ -138,10 +151,10 @@ const apolloClient = new ApolloClient({
   cache,
   defaultOptions: {
     watchQuery: {
-      fetchPolicy: 'cache-and-network',
+      fetchPolicy: "cache-and-network",
     },
   },
-})
+});
 
 export default boot(({ app }) => {
   provideApolloClient(apolloClient);

@@ -186,21 +186,24 @@ const fetchData = async () => {
       fetchPolicy: "cache-first",
     });
 
-    // Gán dữ liệu trả về từ server/cache
     rawRows.value = res.data.traCuuBHYT || [];
-    isDataFromCache.value = false; // Dữ liệu đã được cập nhật từ network thành công
+    isDataFromCache.value = false;
   } catch (err) {
-    console.error("Offline Mode Activated", err);
+    console.warn("Mất kết nối mạng, đang tải từ cache cục bộ...", err);
     isDataFromCache.value = true;
 
-    // Fallback lấy dữ liệu từ cache cục bộ của Apollo khi mất kết nối mạng
+    // Đọc cache không cần truyền variables
     try {
-      const cachedData = apolloClient.readQuery({ query: GET_DANH_SACH_BHYT });
+      const cachedData = apolloClient.readQuery({
+        query: GET_DANH_SACH_BHYT,
+      });
+
       if (cachedData && cachedData.traCuuBHYT) {
         rawRows.value = cachedData.traCuuBHYT;
       }
     } catch (cacheErr) {
-      console.error("Không tìm thấy dữ liệu trong cache:", cacheErr);
+      console.error("Cache trống:", cacheErr);
+      rawRows.value = [];
     }
   } finally {
     loading.value = false;

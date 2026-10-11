@@ -37,8 +37,8 @@ export const KHACH_HANG_FIELDS_FRAGMENT = gql`
 
 // 2. QUERY TRA CỨU DANH SÁCH / TÌM KIẾM SỬ DỤNG FRAGMENT
 export const GET_DANH_SACH_BHYT = gql`
-  query GetDanhSachBHYT($maSoBhxh: String, $searchKey: String) {
-    traCuuBHYT(maSoBhxh: $maSoBhxh, searchKey: $searchKey) {
+  query GetDanhSachBHYT {
+    traCuuBHYT {
       ...KhachHangFields
     }
   }
