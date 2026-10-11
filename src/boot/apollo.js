@@ -110,12 +110,38 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
-const cache = new InMemoryCache();
+// const cache = new InMemoryCache();
 
+// 3. Cấu hình InMemoryCache
+const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        // Tùy chọn cách merge dữ liệu nếu bạn dùng tính năng phân trang (pagination) sau này
+        traCuuBHYT: {
+          merge(existing, incoming) {
+            return incoming
+          }
+        }
+      }
+    }
+  }
+})
+
+// const apolloClient = new ApolloClient({
+//   link: from([errorLink, authLink, httpLink]),
+//   cache,
+// });
+// 4. Khởi tạo Apollo Client
 const apolloClient = new ApolloClient({
   link: from([errorLink, authLink, httpLink]),
   cache,
-});
+  defaultOptions: {
+    watchQuery: {
+      fetchPolicy: 'cache-and-network',
+    },
+  },
+})
 
 export default boot(({ app }) => {
   provideApolloClient(apolloClient);

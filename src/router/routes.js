@@ -2,10 +2,8 @@ const routes = [
   {
     path: "/",
     component: () => import("layouts/MainLayout.vue"),
-    // meta: { requiresAuth: true }, // Sẽ dùng sau để bảo vệ route
-    children: [
-      { path: "", component: () => import("pages/IndexPage.vue") },
-    ],
+    meta: { requiresAuth: true }, // Sẽ dùng sau để bảo vệ route
+    children: [{ path: "", component: () => import("pages/IndexPage.vue") }],
   },
   {
     path: "/login",

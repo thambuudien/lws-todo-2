@@ -1,12 +1,60 @@
 <template>
   <q-page class="q-pa-md bg-grey-2">
-    <!-- KHỐI 4 THẺ KPI ĐỘNG -->
+    <!-- KHỐI 4 THẺ KPI ĐỘNG THỐNG KÊ -->
     <KPIStats :rows="rawRows || []" />
 
-    <!-- THANH TÌM KIẾM ĐA NĂNG ĐÃ NỐI BỘ LỌC CỤC BỘ -->
+    <!-- THANH TÌM KIẾM TỰ ĐỘNG GÕ TÌM NGAY (INSTANT SEARCH) -->
     <FilterBar @search="handleLocalSearch" @addNew="openAddDialog" />
 
-    <!-- THANH TRẠNG THÁI CACHE HOẶC LỌC ĐỘNG -->
+    <!-- THANH ĐIỀU HƯỚNG BỘ LỌC NGHIỆP VỤ (TỐI ƯU MOBILE CLICK) -->
+    <div class="q-mb-md">
+      <div class="text-caption text-grey-7 text-weight-bold q-mb-xs">
+        BỘ LỌC CHIẾN DỊCH VẬN ĐỘNG
+      </div>
+      <div class="row q-col-gutter-xs">
+        <div class="col-4">
+          <q-btn
+            :outline="activeFilter !== 'ALL'"
+            unelevated
+            no-caps
+            dense
+            size="sm"
+            color="primary"
+            class="full-width"
+            label="Tất cả hộ"
+            @click="activeFilter = 'ALL'"
+          />
+        </div>
+        <div class="col-4">
+          <q-btn
+            :outline="activeFilter !== 'CAN_GIA_HAN'"
+            unelevated
+            no-caps
+            dense
+            size="sm"
+            color="purple-7"
+            class="full-width"
+            label="Cần gia hạn"
+            @click="activeFilter = 'CAN_GIA_HAN'"
+          />
+        </div>
+        <div class="col-4">
+          <q-btn
+            :outline="activeFilter !== 'QUA_HAN_90'"
+            unelevated
+            no-caps
+            dense
+            size="sm"
+            color="negative"
+            class="full-width"
+            label="Quá hạn > 90 ngày"
+            @click="activeFilter = 'QUA_HAN_90'"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- THANH TRẠNG THÁI NGUỒN DỮ LIỆU -->
     <div class="row items-center justify-between q-mb-sm q-px-xs">
       <div class="text-caption text-indigo text-weight-bold row items-center">
         <q-badge
@@ -14,33 +62,21 @@
           dot
           class="q-mr-xs"
         />
-        <span>
-          {{
-            isDataFromCache
-              ? "Hiển thị dữ liệu lưu tạm (Offline)"
-              : "Dữ liệu đã được đồng bộ mới nhất"
-          }}
-        </span>
-        <span v-if="searchText" class="text-grey-8 q-ml-sm">
-          (Tìm thấy {{ filteredRows.length }} kết quả cho "{{ searchText }}")
-        </span>
+        <span>{{
+          isDataFromCache
+            ? "Dữ liệu lưu tạm (Offline)"
+            : "Dữ liệu đồng bộ trực tuyến"
+        }}</span>
+        <span v-if="searchText" class="text-grey-8 q-ml-xs"
+          >(Khớp: {{ filteredRows.length }})</span
+        >
       </div>
-      <q-btn
-        v-if="activeFilter !== 'ALL' || searchText"
-        label="Xóa bộ lọc / Tìm kiếm"
-        size="xs"
-        color="grey-7"
-        unelevated
-        dense
-        no-caps
-        @click="clearAllFilters"
-      />
     </div>
 
-    <!-- DANH SÁCH THẺ DI ĐỘNG TỐI ƯU PWA (MOBILE CARD LIST) -->
+    <!-- DANH SÁCH THẺ DI ĐỘNG PWA (MOBILE CARD LIST) -->
     <MainTable :rows="filteredRows" :loading="loading" @edit="openEditDialog" />
 
-    <!-- BIỂU MẪU DIALOG 29 TRƯỜNG NGHIỆP VỤ -->
+    <!-- BIỂU MẪU DIALOG 29 TRƯỜNG -->
     <FormDialog
       v-model="formDialog"
       :formData="selectedForm"
@@ -67,79 +103,69 @@ import MainTable from "./components/MainTable.vue";
 import FormDialog from "./components/FormDialog.vue";
 
 const $q = useQuasar();
-const HOM_NAY = moment("2026-10-11");
+const HOM_NAY = moment("2026-10-11"); // Định vị thời gian thực tế hiện tại
 
-// Khởi tạo mảng dữ liệu gốc
-const rawRows = ref([]);
-const activeFilter = ref("ALL");
+const rawRows = ref();
+const activeFilter = ref("ALL"); // Các trạng thái: ALL, CAN_GIA_HAN, QUA_HAN_90
 const loading = ref(false);
 const submitLoading = ref(false);
 const formDialog = ref(false);
 const selectedForm = ref({});
 const isDataFromCache = ref(false);
 
-// Khai báo biến reactive lưu từ khóa và chế độ tìm kiếm cục bộ
 const searchMode = ref("exact");
 const searchText = ref("");
 
 /**
- * ⚡ BỘ LỌC ĐA NĂNG CỤC BỘ (LOCAL FILTER & SEARCH):
- * Tự động kết hợp gộp giữa Bộ lọc mốc thời gian KPI và Từ khóa tìm kiếm trên RAM điện thoại.
+ * ⚡ BỘ LỌC CHỒNG ĐA TẦNG CỤC BỘ (RAM FILTERING)
  */
 const filteredRows = computed(() => {
-  if (!rawRows.value) return [];
+  if (!rawRows.value) return;
 
-  // Bước 1: Lọc dữ liệu theo mốc thời gian KPI (Sắp hết hạn / Quá hạn)
+  // Mốc 1: Tính toán ngày ranh giới quá hạn 90 ngày (11/10/2026 trừ 90 ngày = 13/07/2026)
+  const mocQuaHan90Ngay = moment(HOM_NAY).subtract(90, "days");
+
+  // Mốc 2: Ngày cuối cùng của tháng tiếp theo (Tháng 10 -> Tháng 11/2026 -> Cuối tháng là 30/11/2026)
+  const mocCuoiThangTiepTheo = moment(HOM_NAY).add(1, "month").endOf("month");
+
+  // BƯỚC 1: LỌC THEO CHIẾN DỊCH THỜI GIAN NGHIỆP VỤ BHYT
   let result = rawRows.value.filter((item) => {
     if (activeFilter.value === "ALL") return true;
+    if (!item.bhytDenNgay) return false;
 
-    if (activeFilter.value === "BHYT_SAP_HET") {
-      if (!item.bhytDenNgay) return false;
-      const d = moment(item.bhytDenNgay, "YYYY-MM-DD");
+    const hanBhy = moment(item.bhytDenNgay, "YYYY-MM-DD");
+
+    if (activeFilter.value === "QUA_HAN_90") {
+      // Điều kiện 1: Đã hết hạn quá 90 ngày
+      return hanBhy.isBefore(mocQuaHan90Ngay);
+    }
+
+    if (activeFilter.value === "CAN_GIA_HAN") {
+      // Điều kiện 2: Hết hạn chưa quá 90 ngày VÀ trước ngày cuối tháng tiếp theo
       return (
-        d.isSameOrAfter(HOM_NAY) && d.isBefore(moment(HOM_NAY).add(30, "days"))
+        hanBhy.isSameOrAfter(mocQuaHan90Ngay) &&
+        hanBhy.isSameOrBefore(mocCuoiThangTiepTheo)
       );
     }
-    if (activeFilter.value === "BHXH_SAP_HET") {
-      if (!item.bhxhDenNgay) return false;
-      const d = moment(item.bhxhDenNgay, "YYYY-MM-DD");
-      return (
-        d.isSameOrAfter(HOM_NAY) && d.isBefore(moment(HOM_NAY).add(30, "days"))
-      );
-    }
-    if (activeFilter.value === "QUA_HAN") {
-      const b = item.bhytDenNgay
-        ? moment(item.bhytDenNgay, "YYYY-MM-DD").isBefore(HOM_NAY)
-        : false;
-      const x = item.bhxhDenNgay
-        ? moment(item.bhxhDenNgay, "YYYY-MM-DD").isBefore(HOM_NAY)
-        : false;
-      return b || x;
-    }
+
     return true;
   });
 
-  // Bước 2: Tiếp tục lọc chồng lên (Chính xác theo CCCD hoặc Tìm kiếm phối hợp đa trường tương đối)
+  // BƯỚC 2: TỰ ĐỘNG LỌC CHỒNG THEO TỪ KHÓA TRÊN Ô GÕ TEXT CHỮ (TÌM KIẾM TỨC THÌ)
   const txt = searchText.value.trim().toLowerCase();
   if (txt !== "") {
     result = result.filter((item) => {
       if (searchMode.value === "exact") {
-        // Khớp chính xác tuyệt đối 10 số hoặc 12 số CCCD
         return item.maSoBhxh === txt;
       } else {
-        // Tìm kiếm tương đối không phân biệt hoa thường trên RAM (Họ tên, SĐT, hoặc một phần CCCD)
         const nameMatch = item.hoTen
           ? item.hoTen.toLowerCase().includes(txt)
           : false;
         const phoneMatch = item.soDienThoai
           ? item.soDienThoai.includes(txt)
           : false;
-        const sdtDongTienMatch = item.sdtDongTien
-          ? item.sdtDongTien.includes(txt)
-          : false;
         const cccdMatch = item.maSoBhxh ? item.maSoBhxh.includes(txt) : false;
-
-        return nameMatch || phoneMatch || sdtDongTienMatch || cccdMatch;
+        return nameMatch || phoneMatch || cccdMatch;
       }
     });
   }
@@ -147,42 +173,40 @@ const filteredRows = computed(() => {
   return result;
 });
 
-
-// Nhận dữ liệu text thay đổi liên tục từ component con gửi lên
 const handleLocalSearch = ({ mode, text }) => {
-  searchMode.value = mode
-  searchText.value = text // Cập nhật biến reactive để kích hoạt computed lọc tức thì
-}
+  searchMode.value = mode;
+  searchText.value = text || "";
+};
 
-
-/**
- * ⚡ HÀM TẢI DỮ LIỆU GỐC BAN ĐẦU VÀ LƯU CACHE (CHỈ GỌI KHI MỞ APP HOẶC SAU KHI LƯU)
- */
 const fetchData = async () => {
   loading.value = true;
   try {
     const res = await apolloClient.query({
       query: GET_DANH_SACH_BHYT,
-      fetchPolicy: "network-only",
+      fetchPolicy: "cache-first",
     });
 
+    // Gán dữ liệu trả về từ server/cache
     rawRows.value = res.data.traCuuBHYT || [];
-    isDataFromCache.value = !!(res.loading && rawRows.value.length > 0);
+    isDataFromCache.value = false; // Dữ liệu đã được cập nhật từ network thành công
   } catch (err) {
-    console.error("Đang chạy chế độ Offline do mất kết nối mạng:", err);
+    console.error("Offline Mode Activated", err);
     isDataFromCache.value = true;
 
-    const cachedData = apolloClient.readQuery({ query: GET_DANH_SACH_BHYT });
-    if (cachedData && cachedData.traCuuBHYT) {
-      rawRows.value = cachedData.traCuuBHYT;
+    // Fallback lấy dữ liệu từ cache cục bộ của Apollo khi mất kết nối mạng
+    try {
+      const cachedData = apolloClient.readQuery({ query: GET_DANH_SACH_BHYT });
+      if (cachedData && cachedData.traCuuBHYT) {
+        rawRows.value = cachedData.traCuuBHYT;
+      }
+    } catch (cacheErr) {
+      console.error("Không tìm thấy dữ liệu trong cache:", cacheErr);
     }
-  }
-  university: {
+  } finally {
     loading.value = false;
   }
 };
 
-// HÀM ĐỒNG BỘ DỮ LIỆU XỬ LÝ LƯU (MUTATION)
 const handleSave = async (formData) => {
   submitLoading.value = true;
   const { id, ...payload } = formData;
@@ -198,29 +222,19 @@ const handleSave = async (formData) => {
         variables: payload,
       });
     }
-
     $q.notify({
       color: "positive",
       message: "Đồng bộ dữ liệu thành công!",
       icon: "cloud_done",
     });
     formDialog.value = false;
-
-    // Nạp lại mảng gốc từ server sau khi có biến động dữ liệu mới
     fetchData();
   } catch (err) {
-    $q.notify({
-      color: "negative",
-      message: err.message || "Lỗi kết nối cơ sở dữ liệu.",
-    });
-  } finally {
+    $q.notify({ color: "negative", message: err.message });
+  }
+  military: {
     submitLoading.value = false;
   }
-};
-
-const clearAllFilters = () => {
-  activeFilter.value = "ALL";
-  searchText.value = "";
 };
 
 const openAddDialog = () => {
@@ -232,7 +246,11 @@ const openEditDialog = (item) => {
   formDialog.value = true;
 };
 
-onMounted(() => {
-  fetchData();
-});
+onMounted(() => fetchData());
 </script>
+
+<style scoped>
+.full-width {
+  width: 100%;
+}
+</style>

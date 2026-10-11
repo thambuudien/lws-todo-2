@@ -1,8 +1,8 @@
 <template>
   <q-page class="flex flex-center" padding>
-    <q-card flat bordered style="width: 100%; max-width: 400px;">
+    <q-card flat bordered style="width: 100%; max-width: 400px">
       <q-card-section>
-        <div class="text-h6">{{ isLogin ? 'Login' : 'Register' }}</div>
+        <div class="text-h6">{{ isLogin ? "Login" : "Register" }}</div>
       </q-card-section>
 
       <q-card-section>
@@ -44,38 +44,43 @@
 </template>
 
 <script>
-import { ref } from 'vue';
-import { useMutation } from '@vue/apollo-composable';
-import { useRouter } from 'vue-router';
-import { LOGIN_USER } from 'src/mutations/login-user';
+import { ref } from "vue";
+import { useMutation } from "@vue/apollo-composable";
+import { useRouter } from "vue-router";
+import { LOGIN_USER } from "src/mutations/login-user";
 
 export default {
-  name: 'PageAuth',
+  name: "PageAuth",
   setup() {
     const isLogin = ref(true);
     const router = useRouter();
     const formData = ref({
-      username: '',
-      password: ''
+      username: "",
+      password: "",
     });
 
-    const { mutate: login, loading, error } = useMutation(LOGIN_USER, () => ({
+    const {
+      mutate: login,
+      loading,
+      error,
+    } = useMutation(LOGIN_USER, () => ({
       variables: {
         username: formData.value.username,
-        password: formData.value.password
-      }
+        password: formData.value.password,
+      },
     }));
 
     const submitForm = async () => {
       try {
         const result = await login();
-        const { authToken, refreshToken } = result.data.login;
+        const { authToken, refreshToken, name } = result.data.login;
         // Store the token (e.g., in localStorage) and redirect
-        localStorage.setItem('authToken', authToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        router.push('/');
+        localStorage.setItem("authToken", authToken);
+        localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("currentUserName", name);
+        router.push("/");
       } catch (e) {
-        console.error('Login failed:', e);
+        console.error("Login failed:", e);
       }
     };
 
@@ -83,8 +88,8 @@ export default {
       isLogin,
       formData,
       submitForm,
-      loading
+      loading,
     };
-  }
+  },
 };
 </script>
