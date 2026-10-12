@@ -51,7 +51,7 @@
             size="sm"
             color="negative"
             class="full-width font-11"
-            label="Quá hạn > 90 ngày"
+            label="Quá hạn"
             @click="activeFilter = 'QUA_HAN_90'"
           />
         </div>
@@ -101,7 +101,12 @@
     </div>
 
     <!-- DANH SÁCH THẺ DI ĐỘNG PWA (MOBILE CARD LIST) -->
-    <MainTable :rows="filteredRows" :loading="loading" @edit="openEditDialog" />
+    <MainTable
+      :rows="filteredRows"
+      :loading="loading"
+      :is-bhxh-mode="onlyBhxhFilter"
+      @edit="openEditDialog"
+    />
 
     <!-- BIỂU MẪU DIALOG 29 TRƯỜNG NGHIỆP VỤ -->
     <FormDialog
@@ -126,7 +131,7 @@ import moment from "moment";
 
 import KPIStats from "./components/KPIStats.vue";
 import FilterBar from "./components/FilterBar.vue";
-import MainTable from "./components/MainTable.vue";
+import MainTable from "./components/MainTable/MainTable.vue";
 import FormDialog from "./components/FormDialog.vue";
 
 const $q = useQuasar();
@@ -145,79 +150,93 @@ const searchText = ref("");
 const onlyBhxhFilter = ref(false);
 
 /**
- * ⚡ THUẬT TOÁN KẾT HỢP ĐA TẦNG CỤC BỘ (RAM COMPUTED)
- * Tự động chuyển đổi trục ngày hết hạn xoay quanh BHYT hoặc BHXH dựa vào Checkbox
+ * ⚡ THUẬT TOÁN KẾT HỢP ĐA TẦNG CỤC BỘ TRÊN RAM (TIẾNG VIỆT KHÔNG DẤU CAMELCASE)
  */
 const filteredRows = computed(() => {
-  if (!rawRows.value || !Array.isArray(rawRows.value)) return [];
+  if (!rawRows.value) return []
 
-  const mocQuaHan90Ngay = moment(HOM_NAY).subtract(90, "days");
-  const mocCuoiThangTiepTheo = moment(HOM_NAY).add(1, "month").endOf("month");
+  // Chuẩn hóa tên biến tiếng Việt không dấu định dạng camelCase (Mốc hệ thống: 12/10/2026)
+  const homNay = moment('2026-10-12')
+  const thangHienTai = homNay.format('YYYY-MM')
 
-  // BƯỚC 1: LỌC THEO CHIẾN DỊCH THỜI GIAN VÀ PHÂN HỆ ĐIỀU HƯỚNG
-  let result = rawRows.value.filter((item) => {
-    // Nếu tích chọn checkbox, loại ngay những người chưa từng tham gia/rỗng cột ngày BHXH
-    if (
-      onlyBhxhFilter.value &&
-      (!item.bhxhDenNgay || item.bhxhDenNgay.trim() === "")
-    ) {
-      return false;
+  // Mốc ranh giới áp dụng riêng cho phân hệ BHYT và BHXH
+  const mocQuaHan90Ngay = moment(homNay).subtract(90, 'days')
+  const mocCuoiThangTiepTheo = moment(homNay).add(1, 'month').endOf('month')
+
+  // BƯỚC 1: LỌC THEO CHIẾN DỊCH VÀ PHÂN HỆ ĐIỀU HƯỚNG CHUYÊN BIỆT
+  let ketQua = rawRows.value.filter(item => {
+    // Nếu tích chọn checkbox BHXH, loại ngay những người chưa từng tham gia BHXH
+    if (onlyBhxhFilter.value && (!item.nhacDongBhxh || item.nhacDongBhxh.trim() === '')) {
+      return false
     }
 
-    if (activeFilter.value === "ALL") return true;
+    if (activeFilter.value === 'ALL') return true
 
-    if (activeFilter.value === "CHUA_THE") {
-      return (
-        item.tinhTrangHanThe === "CHUA_CO_THE" ||
-        !item.maSoTheBhyt ||
-        item.maSoTheBhyt.trim() === ""
-      );
+    if (activeFilter.value === 'CHUA_THE') {
+      return item.tinhTrangHanThe === 'CHUA_CO_THE' || !item.maSoTheBhyt || item.maSoTheBhyt.trim() === ''
     }
 
-    // 🧩 BIẾN ĐỘNG TRỤC THỜI GIAN: Tự động đổi trường kiểm tra dựa vào checkbox combo
-    const ngayKiemTraStr = onlyBhxhFilter.value
-      ? item.bhxhDenNgay
-      : item.bhytDenNgay;
-    if (!ngayKiemTraStr) return false;
+    // 🔥 PHÂN TÁCH LOGIC BỘ LỌC THỜI GIAN THEO ĐÚNG HÀM CHECKBOX KHÔNG DẤU CAMELCASE
+    if (onlyBhxhFilter.value) {
+      // 📊 PHÂN HỆ BHXH TỰ NGUYỆN: Kiểm tra và tính toán quá hạn theo Tháng trước
+      const ngayKiemTraStr = (item.nhacDongBhxh && item.nhacDongBhxh.trim() !== '') ? item.nhacDongBhxh : item.bhxhDenNgay
+      if (!ngayKiemTraStr) return false
 
-    const mốcHạnBảoHiểm = moment(ngayKiemTraStr, "YYYY-MM-DD");
+      const mocThangBhxh = moment(ngayKiemTraStr, 'YYYY-MM-DD').format('YYYY-MM')
 
-    if (activeFilter.value === "QUA_HAN_90") {
-      return mốcHạnBảoHiểm.isBefore(mocQuaHan90Ngay);
+      if (activeFilter.value === 'QUA_HAN_90') {
+        // QUY TẮC BHXH: Quá hạn đóng nghĩa là mốc tháng nằm ở Tháng trước
+        return mocThangBhxh < thangHienTai
+      }
+
+      if (activeFilter.value === 'CAN_GIA_HAN') {
+        // Cần gia hạn BHXH: Kỳ nộp tiền nằm ở tháng hiện tại hoặc tháng tiếp theo
+        const mocCuoiBhxh = moment(ngayKiemTraStr, 'YYYY-MM-DD').endOf('month')
+        return mocCuoiBhxh.isSameOrAfter(homNay) && mocCuoiBhxh.isSameOrBefore(mocCuoiThangTiepTheo)
+      }
+    } else {
+      // 🏥 PHÂN HỆ BHYT: Kiểm tra chính xác theo từng Ngày hết hạn thẻ gốc
+      if (!item.bhytDenNgay) return false
+      const hanTheBhyt = moment(item.bhytDenNgay, 'YYYY-MM-DD')
+
+      if (activeFilter.value === 'QUA_HAN_90') {
+        // QUY TẮC BHYT: Áp dụng mốc tính toán trễ hạn chính xác quá 90 ngày
+        return hanTheBhyt.isBefore(mocQuaHan90Ngay)
+      }
+
+      if (activeFilter.value === 'CAN_GIA_HAN') {
+        // Cần gia hạn BHYT: Hết hạn chưa quá 90 ngày và trước cuối tháng sau
+        return hanTheBhyt.isSameOrAfter(mocQuaHan90Ngay) && hanTheBhyt.isSameOrBefore(mocCuoiThangTiepTheo)
+      }
     }
 
-    if (activeFilter.value === "CAN_GIA_HAN") {
-      return (
-        mốcHạnBảoHiểm.isSameOrAfter(mocQuaHan90Ngay) &&
-        mốcHạnBảoHiểm.isSameOrBefore(mocCuoiThangTiepTheo)
-      );
-    }
+    return true
+  })
 
-    return true;
-  });
-
-  // BƯỚC 2: LỌC TỰ ĐỘNG THEO TỪ KHÓA TRÊN Ô GÕ TEXT CHỮ (TÌM KIẾM TỨC THÌ)
-  const txt = searchText.value.trim().toLowerCase();
-  if (txt !== "") {
-    result = result.filter((item) => {
-      const nameMatch = item.hoTen
-        ? item.hoTen.toLowerCase().includes(txt)
-        : false;
-      const phoneMatch = item.soDienThoai
-        ? item.soDienThoai.includes(txt)
-        : false;
-      const cccdMatch = item.maSoBhxh ? item.maSoBhxh.includes(txt) : false;
-      return nameMatch || phoneMatch || cccdMatch;
-    });
+  // BƯỚC 2: LỌC TỰ ĐỘNG TÌM KIẾM HỖN HỢP TRÊN BỘ NHỚ RAM
+  const tuKhoa = searchText.value.trim().toLowerCase()
+  if (tuKhoa !== '') {
+    ketQua = ketQua.filter(item => {
+      const trungTen = item.hoTen ? item.hoTen.toLowerCase().includes(tuKhoa) : false
+      const trungSdt = item.soDienThoai ? item.soDienThoai.includes(tuKhoa) : false
+      const trungCccd = item.maSoBhxh ? item.maSoBhxh.includes(tuKhoa) : false
+      return trungTen || trungSdt || trungCccd
+    })
   }
 
-  return result;
-});
+  return ketQua
+})
+
 
 // Nhận gộp gói dữ liệu filter truyền từ FilterBar
-const handleLocalSearch = ({ text, onlyBhxh }) => {
-  searchText.value = text;
-  onlyBhxhFilter.value = onlyBhxh;
+const handleLocalSearch = (payload) => {
+  if (payload && typeof payload === "object") {
+    searchText.value = payload.text || "";
+    onlyBhxhFilter.value = payload.onlyBhxh ?? false; // Đồng bộ cập nhật trạng thái true/false của Checkbox
+  } else {
+    // Dự phòng nếu hệ thống truyền text đơn lẻ
+    searchText.value = payload || "";
+  }
 };
 
 const fetchData = async () => {

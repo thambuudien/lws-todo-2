@@ -10,6 +10,7 @@
           v-model="searchText"
           placeholder="Gõ họ tên, số điện thoại, hoặc số CCCD để tìm ngay..."
           @update:model-value="emitFilters"
+          @clear="onClearSearch"
         >
           <template v-slot:prepend>
             <q-icon name="search" color="primary" />
@@ -17,7 +18,7 @@
         </q-input>
       </div>
 
-      <!-- Ô CHECKBOX LỌC KẾT HỢP THEO PHÂN HỆ BHXH -->
+      <!-- Ô CHECKBOX LỌC KẾT HỢP CHIẾN DỊCH THEO PHÂN HỆ BHXH -->
       <div class="col-12 col-sm-3 row items-center">
         <q-checkbox
           v-model="onlyBhxh"
@@ -31,28 +32,44 @@
 
       <!-- Nút thêm mới / đồng bộ -->
       <div class="col-12 col-sm-3 text-right">
-        <q-btn color="primary" icon="add" label="Thêm mới / Đồng bộ" no-caps class="full-width" @click="$emit('addNew')" unelevated />
+        <q-btn
+          color="primary"
+          icon="add"
+          label="Thêm mới / Đồng bộ"
+          no-caps
+          class="full-width"
+          @click="$emit('addNew')"
+          unelevated
+        />
       </div>
     </q-card-section>
   </q-card>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from "vue";
 
-const emit = defineEmits(['search', 'addNew'])
+const emit = defineEmits(["search", "addNew"]);
 
-const searchText = ref('')
-const onlyBhxh = ref(false)
+const searchText = ref("");
+const onlyBhxh = ref(false);
 
+// Phát gộp đồng thời cả từ khóa gõ text và trạng thái Checkbox về tệp cha IndexPage
 const emitFilters = () => {
-  emit('search', {
-    text: searchText.value || '',
-    onlyBhxh: onlyBhxh.value
-  })
-}
+  emit("search", {
+    text: searchText.value || "",
+    onlyBhxh: onlyBhxh.value,
+  });
+};
+
+const onClearSearch = () => {
+  searchText.value = "";
+  emitFilters();
+};
 </script>
 
 <style scoped>
-.full-width { width: 100%; }
+.full-width {
+  width: 100%;
+}
 </style>
