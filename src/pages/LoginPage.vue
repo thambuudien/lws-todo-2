@@ -78,6 +78,7 @@ export default {
         localStorage.setItem("authToken", authToken);
         localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem("currentUserName", user.name);
+        localStorage.setItem("user", JSON.stringify(user));
         router.push("/");
       } catch (e) {
         console.error("Login failed:", e);

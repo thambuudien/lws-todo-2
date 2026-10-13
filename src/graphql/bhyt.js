@@ -51,6 +51,7 @@ export const UPSERT_KHACH_HANG_BHYT = gql`
   mutation UpsertKhachHangBHYT(
     $maSoBhxh: String!
     $hoTen: String!
+    $gioiTinh: Boolean
     $soDienThoai: String
     $ngaySinh: String
     $bhytTuNgay: String
@@ -80,6 +81,7 @@ export const UPSERT_KHACH_HANG_BHYT = gql`
       input: {
         maSoBhxh: $maSoBhxh
         hoTen: $hoTen
+        gioiTinh: $gioiTinh
         soDienThoai: $soDienThoai
         ngaySinh: $ngaySinh
         bhytTuNgay: $bhytTuNgay
@@ -119,6 +121,7 @@ export const UPDATE_KHACH_HANG_BHYT = gql`
   mutation UpdateKhachHangBHYT(
     $id: ID!
     $hoTen: String
+    $gioiTinh: Boolean
     $soDienThoai: String
     $ngaySinh: String
     $bhytTuNgay: String
@@ -148,6 +151,7 @@ export const UPDATE_KHACH_HANG_BHYT = gql`
       input: {
         id: $id
         hoTen: $hoTen
+        gioiTinh: $gioiTinh
         soDienThoai: $soDienThoai
         ngaySinh: $ngaySinh
         bhytTuNgay: $bhytTuNgay

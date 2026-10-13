@@ -114,6 +114,7 @@
 
 <script setup>
 import moment from "moment";
+import CardExpansion from "./CardExpansion.vue";
 
 defineProps({
   item: { type: Object, required: true },
@@ -217,8 +218,8 @@ const getDynamicLabelBhxh = (item) => {
   const ngayKiemTraStr =
     item.nhacDongBhxh && item.nhacDongBhxh.trim() !== ""
       ? item.nhacDongBhxh
-      : item.bhxhDenNgay;
-  if (!ngayKiemTraStr || ngayKiemTraStr.trim() === "") return "Chưa tham gia";
+      : "";
+  if (!ngayKiemTraStr || ngayKiemTraStr.trim() === "") return "Đang tham gia";
 
   const ngayMucTieu = moment(ngayKiemTraStr, "YYYY-MM-DD");
   const thangHienTai = homNay.format("YYYY-MM");

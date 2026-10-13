@@ -13,7 +13,7 @@
             localForm.id
               ? "CẬP NHẬT HỒ SƠ THỦ CÔNG"
               : "THÊM MỚI / ĐỒNG BỘ ĐỘNG (UPSERT)"
-          }}
+          }}[cite: 1]
         </div>
         <q-space />
         <q-btn icon="close" flat round dense @click="close" />
@@ -26,7 +26,8 @@
           <div
             class="col-12 text-subtitle2 text-primary text-weight-bold row items-center"
           >
-            <q-icon name="badge" class="q-mr-xs" /> ĐỊNH DANH HÀNH CHÍNH CƠ BẢN
+            <q-icon name="badge" class="q-mr-xs" /> ĐỊNH DANH HÀNH CHÍNH CƠ
+            BẢN[cite: 1]
           </div>
           <div class="col-12 col-sm-4">
             <q-input
@@ -49,7 +50,6 @@
             />
           </div>
           <div class="col-12 col-sm-4">
-            <!-- GIỚI TÍNH CHUẨN BOOLEAN (TRUE: NAM / FALSE: NỮ) -->
             <q-select
               filled
               dense
@@ -121,12 +121,12 @@
             />
           </div>
 
-          <!-- KHỐI 2: PHÂN HỆ NGHIỆP VỤ BẢO HIỂM Y TẾ -->
+          <!-- KHỐI 2: PHÂN HỆ BẢO HIỂM Y TẾ -->
           <div
             class="col-12 text-subtitle2 text-purple text-weight-bold q-mt-md row items-center"
           >
             <q-icon name="medical_services" class="q-mr-xs" /> 🏥 NGHIỆP VỤ BẢO
-            HIỂM Y TẾ HỘ GIA ĐÌNH
+            HIỂM Y TẾ HỘ GIA ĐÌNH[cite: 1]
           </div>
           <div class="col-12 col-sm-4">
             <q-input
@@ -209,12 +209,12 @@
             />
           </div>
 
-          <!-- KHỐI 3: PHÂN HỆ NGHIỆP VỤ BHXH TỰ NGUYỆN -->
+          <!-- KHỐI 3: PHÂN HỆ BHXH TỰ NGUYỆN -->
           <div
             class="col-12 text-subtitle2 text-green-9 text-weight-bold q-mt-md row items-center"
           >
             <q-icon name="trending_up" class="q-mr-xs" /> 📈 NGHIỆP VỤ BẢO HIỂM
-            XÃ HỘI TỰ NGUYỆN
+            XÃ HỘI TỰ NGUYỆN[cite: 1]
           </div>
           <div class="col-12 col-sm-4">
             <q-input
@@ -286,7 +286,7 @@
             class="col-12 text-subtitle2 text-orange-9 text-weight-bold q-mt-md row items-center"
           >
             <q-icon name="hub" class="q-mr-xs" /> 📍 THÔNG TIN ĐIỀU PHỐI TIN
-            NHẮN & KIỂM SOÁT
+            NHẮN & KIỂM SOÁT[cite: 1]
           </div>
           <div class="col-12 col-sm-4">
             <q-input
@@ -307,7 +307,6 @@
             />
           </div>
           <div class="col-12 col-sm-4">
-            <!-- BỘ CHỌN HẠN THẺ TÍCH HỢP TRẠNG THÁI CHO NGƯỜI CHƯA CÓ THẺ -->
             <q-select
               filled
               dense
@@ -367,7 +366,7 @@ const emit = defineEmits(["update:modelValue", "save"]);
 
 const isOpen = ref(props.modelValue);
 
-// Định hình cấu trúc khởi tạo sạch, tường minh đầy đủ toàn bộ 29 trường thuộc tính
+// Định hình cấu trúc khởi tạo sạch toàn bộ 29 trường thuộc tính
 const createEmptyForm = () => ({
   id: null,
   maSoBhxh: "",
@@ -414,14 +413,39 @@ watch(
   }
 );
 
-// Đồng bộ sâu dữ liệu khi mở/đổi bản ghi từ lớp cha điều phối truyền vào
+// Đồng bộ sâu dữ liệu khi mở bản ghi và khử giá trị "0000-00-00" lỗi từ database đổ lên UI
 watch(
   () => props.formData,
   (val) => {
-    localForm.value =
-      val && Object.keys(val).length > 0
-        ? { ...createEmptyForm(), ...val }
-        : createEmptyForm();
+    if (val && Object.keys(val).length > 0) {
+      const duLieuSạch = { ...createEmptyForm(), ...val };
+
+      // Mảng chứa danh sách các trường ngày tháng cần bóc tách kiểm tra
+      const cacTruongNgay = [
+        "ngaySinh",
+        "bhytTuNgay",
+        "bhytDenNgay",
+        "ngayBienLaiBhyt",
+        "ngay5NamLienTuc",
+        "bhxhTuNgay",
+        "bhxhDenNgay",
+        "nhacDongBhxh",
+        "ngayBienLaiBhxh",
+      ];
+
+      cacTruongNgay.forEach((truong) => {
+        if (
+          duLieuSạch[truong] === "0000-00-00" ||
+          duLieuSạch[truong] === null
+        ) {
+          duLieuSạch[truong] = ""; // Chuyển chuỗi lỗi thành rỗng để hiển thị sạch sẽ trên ô input
+        }
+      });
+
+      localForm.value = duLieuSạch;
+    } else {
+      localForm.value = createEmptyForm();
+    }
   },
   { deep: true, immediate: true }
 );
@@ -429,7 +453,38 @@ watch(
 const close = () => {
   isOpen.value = false;
 };
+
+/**
+ * ⚡ BIỆN PHÁP CHẶN LỖI CHUẨN HÓA TRƯỚC KHI LƯU
+ * Quét toàn bộ dữ liệu, nếu phát hiện chuỗi trống hoặc mặt nạ chưa điền hết,
+ * ép giá trị về chuỗi rỗng '' để MySQL hiểu và bỏ qua, tuyệt đối không ghi nhận 0000-00-00.
+ */
 const save = () => {
-  emit("save", localForm.value);
+  const payloadGuiDi = { ...localForm.value };
+  const cacTruongNgay = [
+    "ngaySinh",
+    "bhytTuNgay",
+    "bhytDenNgay",
+    "ngayBienLaiBhyt",
+    "ngay5NamLienTuc",
+    "bhxhTuNgay",
+    "bhxhDenNgay",
+    "nhacDongBhxh",
+    "ngayBienLaiBhxh",
+  ];
+
+  cacTruongNgay.forEach((truong) => {
+    const giaTri = payloadGuiDi[truong];
+    if (
+      !giaTri ||
+      giaTri.trim() === "" ||
+      giaTri.includes("_") ||
+      giaTri === "0000-00-00"
+    ) {
+      payloadGuiDi[truong] = ""; // Ép về chuỗi rỗng sạch
+    }
+  });
+
+  emit("save", payloadGuiDi);
 };
 </script>
