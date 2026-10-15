@@ -46,7 +46,7 @@
       v-model="leftDrawerOpen"
       show-if-above
       bordered
-      :width="260"
+      :width="280"
       class="bg-grey-1"
     >
       <q-list>
@@ -96,6 +96,149 @@
             <q-item-label>Danh sách tái tục</q-item-label>
             <q-item-label caption class="text-grey-6 text-caption"
               >Quản lý gộp 29 trường</q-item-label
+            >
+          </q-item-section>
+        </q-item>
+
+        <q-separator class="q-my-md" />
+
+        <!-- BỘ CÔNG CỤ MỚI -->
+        <q-item-label
+          header
+          class="text-grey-8 text-weight-bold text-caption q-pb-none q-pt-none"
+        >
+          📊 BỘ CÔNG CỤ TÍNH BHXH & BHYT - LONG WEB STUDIO
+        </q-item-label>
+
+        <q-item dense>
+          <q-item-section>
+            <q-item-label caption class="text-grey-8 text-caption">
+              🤖 Cộng đồng số hóa quy trình tư vấn an sinh xã hội từ Freelancer
+              Long Web Studio!
+            </q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item-label
+          header
+          class="text-caption text-weight-medium q-pt-sm q-pb-none"
+        >
+          🛠️ TRỌN BỘ TOOL MIỄN PHÍ:
+        </q-item-label>
+
+        <q-item
+          clickable
+          dense
+          v-ripple
+          @click="openLink('https://www.longwebstudio.io.vn/tinh-bhxh-tu-nguyen')"
+        >
+          <q-item-section avatar>
+            <q-icon name="calculate" color="green-7" size="xs" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label class="font-12 text-weight-medium"
+              >BHXH Tự Nguyện</q-item-label
+            >
+            <q-item-label caption class="font-11"
+              >Tính phí đóng & dự tính lương hưu</q-item-label
+            >
+          </q-item-section>
+        </q-item>
+
+        <q-item
+          clickable
+          dense
+          v-ripple
+          @click="
+            openLink('https://www.longwebstudio.io.vn/tinh-bhyt-ho-gia-dinh')
+          "
+        >
+          <q-item-section avatar>
+            <q-icon name="family_restroom" color="blue-7" size="xs" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label class="font-12 text-weight-medium"
+              >BHYT Hộ Gia Đình</q-item-label
+            >
+            <q-item-label caption class="font-11"
+              >Tính giảm trừ & tạo mã VietQR</q-item-label
+            >
+          </q-item-section>
+        </q-item>
+
+        <q-item
+          clickable
+          dense
+          v-ripple
+          @click="openLink('https://sothu.longwebstudio.io.vn/')"
+        >
+          <q-item-section avatar>
+            <q-icon name="event_note" color="orange-7" size="xs" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label class="font-12 text-weight-medium"
+              >Sổ Thu Bảo Hiểm Online</q-item-label
+            >
+            <q-item-label caption class="font-11"
+              >Nhắc lịch hạn đóng tự động</q-item-label
+            >
+          </q-item-section>
+        </q-item>
+
+        <q-item-label
+          header
+          class="text-caption text-weight-medium q-pt-sm q-pb-none"
+        >
+          🔥 QUYỀN LỢI THÀNH VIÊN:
+        </q-item-label>
+
+        <q-item dense>
+          <q-item-section>
+            <q-item-label caption class="font-11"
+              >💬 Nhận kịch bản nhắn tin Zalo 1-Click và bài đăng Facebook thu hút
+              người dân.</q-item-label
+            >
+            <q-item-label caption class="font-11"
+              >📈 Chia sẻ kinh nghiệm thực chiến đi thị trường, chốt sổ/thẻ nhanh
+              cấp xã/phường.</q-item-label
+            >
+            <q-item-label caption class="font-11"
+              >💻 Cập nhật liên tục các tính năng số chuyên nghiệp độc
+              quyền.</q-item-label
+            >
+          </q-item-section>
+        </q-item>
+
+        <q-item
+          clickable
+          dense
+          v-ripple
+          @click="openLink('https://zalo.me/g/lpinyffjkeqrre2jpr9t')"
+        >
+          <q-item-section avatar>
+            <q-icon name="groups" color="blue-8" size="xs" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label class="font-12 text-weight-medium"
+              >Tham gia cộng đồng Zalo</q-item-label
+            >
+            <q-item-label caption class="font-11"
+              >Hỏi đáp & chia sẻ kinh nghiệm</q-item-label
+            >
+          </q-item-section>
+        </q-item>
+
+        <q-item-label
+          header
+          class="text-caption text-weight-medium q-pt-sm q-pb-none"
+        >
+          ⚠️ Quy tắc:
+        </q-item-label>
+        <q-item dense>
+          <q-item-section>
+            <q-item-label caption class="font-11"
+              >Chỉ thảo luận chuyên môn, không quảng cáo ngoài lề, không
+              spam.</q-item-label
             >
           </q-item-section>
         </q-item>
@@ -154,7 +297,6 @@ const userDangNhap = ref({
   email: "",
 });
 
-// Đọc trực tiếp chuỗi tên sạch từ bộ nhớ tạm local của trình duyệt di động
 const tenNhanVien = computed(() => userDangNhap.value.name);
 const databaseId = computed(() => userDangNhap.value.databaseId);
 const email = computed(() => userDangNhap.value.email);
@@ -167,6 +309,10 @@ const navigateTo = (routeName) => {
 };
 const updateOnlineStatus = () => {
   isOnline.value = navigator.onLine;
+};
+
+const openLink = (url) => {
+  window.open(url, "_blank");
 };
 
 const confirmLogout = () => {
@@ -190,7 +336,6 @@ const confirmLogout = () => {
 onMounted(() => {
   window.addEventListener("online", updateOnlineStatus);
   window.addEventListener("offline", updateOnlineStatus);
-  // Đồng bộ giá trị biến phản xạ với localStorage để hiển thị tức thì
   userDangNhap.value = JSON.parse(localStorage.getItem("user")) || {
     name: "",
     databaseId: 0,
@@ -236,5 +381,12 @@ onBeforeUnmount(() => {
 }
 .fadeOut {
   animation-name: fadeOut;
+}
+.font-11 {
+  font-size: 11px;
+  line-height: 1.3;
+}
+.font-12 {
+  font-size: 12.5px;
 }
 </style>
