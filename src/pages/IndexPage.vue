@@ -4,7 +4,7 @@
     <KPIStats :rows="rawRows || []" />
 
     <!-- THANH TÌM KIẾM HỖN HỢP TÍCH HỢP CHECKBOX LỌC KẾT HỢP -->
-    <FilterBar @search="handleLocalSearch" @addNew="openAddDialog" />
+    <FilterBar @search="handleLocalSearch" @addNew="openAddDialog" @refresh="fetchData"/>
 
     <!-- THANH ĐIỀU HƯỚNG BỘ LỌC NGHIỆP VỤ (TỐI ƯU MOBILE CLICK) -->
     <div class="q-mb-md">
@@ -106,6 +106,7 @@
       :loading="loading"
       :is-bhxh-mode="onlyBhxhFilter"
       @edit="openEditDialog"
+      @fetchData="fetchData"
     />
 
     <!-- BIỂU MẪU DIALOG 29 TRƯỜNG NGHIỆP VỤ -->
@@ -135,7 +136,6 @@ import MainTable from "./components/MainTable/MainTable.vue";
 import FormDialog from "./components/FormDialog/FormDialog.vue";
 
 const $q = useQuasar();
-const HOM_NAY = moment("2026-10-12"); // Đồng bộ theo mốc thời gian thực tế hệ thống [CONTEXT]
 
 const rawRows = ref([]);
 const activeFilter = ref("ALL");
@@ -166,10 +166,7 @@ const filteredRows = computed(() => {
   // BƯỚC 1: LỌC THEO CHIẾN DỊCH VÀ PHÂN HỆ ĐIỀU HƯỚNG CHUYÊN BIỆT
   let ketQua = rawRows.value.filter((item) => {
     // Nếu tích chọn checkbox BHXH, loại ngay những người chưa từng tham gia BHXH
-    if (
-      onlyBhxhFilter.value &&
-      (item.soTienBhxh === 0)
-    ) {
+    if (onlyBhxhFilter.value && item.soTienBhxh === 0) {
       return false;
     }
 

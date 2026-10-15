@@ -4,34 +4,44 @@ import { gql } from "@apollo/client/core";
 export const KHACH_HANG_FIELDS_FRAGMENT = gql`
   fragment KhachHangFields on KhachHangBHYT {
     id
+    userId
     maSoBhxh
     hoTen
+    ngaySinh
     gioiTinh
+    diaChiLienHe
+    maHoGiaDinh
+    maToKhaiRieng
     soDienThoai
     trangThai
-    ngaySinh
+
     bhytTuNgay
     bhytDenNgay
-    soTienBhyt
-    bhxhTuNgay
-    bhxhDenNgay
-    nhacDongBhxh
-    soTienBhxh
-    soThangBhxh
-    mucThuNhapBhxh
-    ngayBienLaiBhyt
-    ngayBienLaiBhxh
     maSoTheBhyt
     ngay5NamLienTuc
     noiKcbBanDau
     donViDong
     theoDoiCoQuanBhxh
-    maHoGiaDinh
-    maToKhaiRieng
-    ghiChu
+
+    bhxhTuNgay
+    bhxhDenNgay
+    nhacDongBhxh
+    soThangBhxh
+    phuongThucDong
+    mucThuNhapBhxh
+    donViDongBhxh
+
+    soTienBhyt
+    soTienBhxh
+    ngayBienLaiBhyt
+    ngayBienLaiBhxh
+
     sdtDongTien
     sdtNhacHan
     tinhTrangHanThe
+    ghiChu
+
+    updatedAt
     createdAt
   }
 `;

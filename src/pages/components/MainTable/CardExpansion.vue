@@ -124,8 +124,7 @@
           {{ item.bhxhDenNgay || "Chưa tham gia" }}
         </div>
         <div>
-          <strong>Phương thức đóng:</strong> {{ item.soThangBhxh || 0 }} tháng
-          (Số tháng tham gia)
+          <strong>Phương thức đóng:</strong> {{ item.phuongThucDong || "" }}
         </div>
         <div>
           <strong>Mức thu nhập lựa chọn đóng:</strong>
@@ -241,7 +240,7 @@ const props = defineProps({
   smsLink: { type: String, default: "" },
   isBhxhMode: { type: Boolean, default: false },
 });
-defineEmits(["zalo"]);
+const emit = defineEmits(["zalo", "fetchData"]);
 
 const formatCurrency = (val) =>
   val ? val.toLocaleString("vi-VN") + " đ" : "0 đ";
@@ -276,7 +275,6 @@ const openLinkSsm = (customer) => {
     ? encodeURIComponent(customer.ngaySinh)
     : "";
 
-  // const url = `https://ssm.vnpost.vn/qldv/tra-cuu/tra-cuu-thong-tin-the?maSoBHXH=${codeBhx}&hoTen=${fullName}&ngaySinhDt=${birthDate}`;
   let url = "";
   if (props.isBhxhMode) {
     url = `https://ssm.vnpost.vn/qldv/tra-cuu/thong-tin-bhxh?maSoBHXH=${codeBhx}&hoTen=${fullName}&ngaySinhDt=${birthDate}`;
@@ -284,6 +282,9 @@ const openLinkSsm = (customer) => {
     url = `https://ssm.vnpost.vn/qldv/tra-cuu/tra-cuu-thong-tin-the?maSoBHXH=${codeBhx}&hoTen=${fullName}&ngaySinhDt=${birthDate}`;
   }
   window.open(url, "_blank");
+  setTimeout(() => {
+    emit("fetchData");
+  }, 5000);
 };
 </script>
 

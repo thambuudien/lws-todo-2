@@ -36,8 +36,17 @@
           </span>
         </div>
 
-        <q-item-label caption class="text-weight-bold text-grey-7 q-mt-xs">
-          Số ĐDCN/CCCD: {{ item.maSoBhxh }}
+        <q-item-label caption class="text-weight-bold text-grey-7 q-mt-xs row items-center">
+          <span>Số thẻ/Mã số BHXH: {{ item.maSoTheBhyt || item.maSoBhxh }}</span>
+          <q-btn
+            flat
+            round
+            dense
+            size="sm"
+            icon="content_copy"
+            @click.stop="copy(`${item.hoTen}, ${item.maSoBhxh}, ${new Date(item.ngaySinh).toLocaleDateString('vi-VN')}, `)"
+            class="q-ml-xs"
+          />
         </q-item-label>
 
         <!-- KHU VỰC BADGE ĐỘC QUYỀN ĐÃ HOÁN ĐỔI ĐỒNG BỘ DỰA TRÊN Ô CHECKBOX -->
@@ -107,6 +116,7 @@
         :smsLink="smsLink"
         :is-bhxh-mode="isBhxhMode"
         @zalo="$emit('zalo', item)"
+        @fetchData="$emit('fetchData')"
       />
     </q-slide-transition>
   </q-card>
@@ -115,6 +125,8 @@
 <script setup>
 import moment from "moment";
 import CardExpansion from "./CardExpansion.vue";
+import { useQuasar, copyToClipboard } from "quasar";
+const $q = useQuasar();
 
 defineProps({
   item: { type: Object, required: true },
@@ -122,7 +134,7 @@ defineProps({
   isBhxhMode: { type: Boolean, default: false },
   smsLink: { type: String, default: "" },
 });
-defineEmits(["toggleExpand", "edit", "zalo"]);
+defineEmits(["toggleExpand", "edit", "zalo", "fetchData"]);
 
 // Mốc thời gian thực tế hiện tại của hệ thống đại lý thu
 const homNay = moment("2026-10-12");
@@ -209,6 +221,24 @@ const getDynamicColorBhxh = (item) => {
     if (ngayMucTieu.isBefore(moment(homNay).add(30, "days"))) return "warning";
     return "positive";
   }
+};
+
+const copy = (text) => {
+  copyToClipboard(text)
+    .then(() => {
+      $q.notify({
+        color: "positive",
+        message: "Đã sao chép vào clipboard",
+        icon: "content_copy",
+      });
+    })
+    .catch(() => {
+      $q.notify({
+        color: "negative",
+        message: "Lỗi sao chép",
+        icon: "report_problem",
+      });
+    });
 };
 
 /**

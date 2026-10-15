@@ -29,6 +29,7 @@
         @toggleExpand="toggleExpand"
         @edit="(val) => $emit('edit', val)"
         @zalo="sendZaloDynamic"
+        @fetchData="$emit('fetchData')"
       />
     </div>
   </div>
@@ -44,7 +45,7 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   isBhxhMode: { type: Boolean, default: false }, // Nhận trạng thái Checkbox từ IndexPage
 });
-const emit = defineEmits(["edit"]);
+const emit = defineEmits(["edit", "fetchData"]);
 
 const $q = useQuasar();
 const expandedCards = ref([]);

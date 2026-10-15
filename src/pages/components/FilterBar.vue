@@ -15,6 +15,18 @@
           <template v-slot:prepend>
             <q-icon name="search" color="primary" />
           </template>
+          <template v-slot:append>
+            <q-btn
+              icon="refresh"
+              color="secondary"
+              @click="$emit('refresh')"
+              round
+              dense
+              flat
+            >
+              <q-tooltip>Tải lại dữ liệu</q-tooltip>
+            </q-btn>
+          </template>
         </q-input>
       </div>
 
@@ -49,7 +61,7 @@
 <script setup>
 import { ref, watch } from "vue";
 
-const emit = defineEmits(["search", "addNew"]);
+const emit = defineEmits(["search", "addNew", "refresh"]);
 
 const searchText = ref("");
 const onlyBhxh = ref(false);
