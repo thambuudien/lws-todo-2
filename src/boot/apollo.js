@@ -14,7 +14,7 @@ import moment from "moment";
 import "moment/locale/vi";
 
 moment.locale("vi");
-
+console.log(process.env.GRAPHQL_URI);
 // HTTP connection to the API
 const httpLink = createHttpLink({
   uri: process.env.GRAPHQL_URI,
@@ -106,7 +106,7 @@ const authLink = setContext((_, { headers }) => {
       ...headers,
       authorization: token ? `Bearer ${token}` : "",
       "lws-secret-token": process.env.LWS_SECRET_TOKEN,
-      "lws-hotham-secret-token": process.env.LWS_HOTHAM_SECRET_TOKEN
+      "lws-hotham-secret-token": process.env.LWS_HOTHAM_SECRET_TOKEN,
     },
   };
 });

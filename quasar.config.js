@@ -1,6 +1,8 @@
 /* eslint-env node */
 
 const { configure } = require("quasar/wrappers");
+
+// Tải các biến môi trường từ file .env
 require("dotenv").config();
 
 module.exports = configure(function (/* ctx */) {
@@ -22,7 +24,12 @@ module.exports = configure(function (/* ctx */) {
         node: "node16",
       },
       vueRouterMode: "history",
-      env: require("dotenv").config().parsed,
+      // Cung cấp các biến môi trường cho client-side code
+      env: {
+        GRAPHQL_URI: process.env.GRAPHQL_URI,
+        LWS_SECRET_TOKEN: process.env.LWS_SECRET_TOKEN,
+        LWS_HOTHAM_SECRET_TOKEN: process.env.LWS_HOTHAM_SECRET_TOKEN,
+      },
     },
 
     devServer: {
@@ -41,13 +48,13 @@ module.exports = configure(function (/* ctx */) {
     animations: [],
 
     ssr: {
-      pwa: false, // <-- Giữ nguyên vì bạn không build SSR+PWA
+      pwa: false,
       prodPort: 3000,
       middlewares: ["render"],
     },
 
     pwa: {
-      workboxMode: "generateSW", // Chuyển từ 'injectManifest' nếu không dùng custom service worker
+      workboxMode: "generateSW",
       injectPwaMetaTags: true,
       swFilename: "sw.js",
       manifestFilename: "manifest.json",
