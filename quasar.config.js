@@ -2,6 +2,7 @@
 
 const { configure } = require("quasar/wrappers");
 
+// Tải các biến môi trường từ file .env
 require("dotenv").config();
 
 module.exports = configure(function (/* ctx */) {
@@ -23,6 +24,7 @@ module.exports = configure(function (/* ctx */) {
         node: "node16",
       },
       vueRouterMode: "history",
+      // Cung cấp các biến môi trường cho client-side code
       env: {
         GRAPHQL_URI: process.env.GRAPHQL_URI,
         LWS_SECRET_TOKEN: process.env.LWS_SECRET_TOKEN,
@@ -52,11 +54,10 @@ module.exports = configure(function (/* ctx */) {
     },
 
     pwa: {
-      // THAY ĐỔI Ở ĐÂY: Sử dụng custom service worker đã có
-      workboxMode: "injectManifest", 
+      workboxMode: "generateSW",
+      injectPwaMetaTags: true,
       swFilename: "sw.js",
       manifestFilename: "manifest.json",
-      injectPwaMetaTags: true,
       useCredentialsForManifestTag: false,
     },
 
