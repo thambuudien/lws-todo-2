@@ -24,7 +24,7 @@ jobs:
           echo "LWS_HOTHAM_SECRET_TOKEN=${{ secrets.LWS_HOTHAM_SECRET_TOKEN }}" >> .env
 
       - name: Install Dependencies 👨‍💻
-        run: npm install
+        run: npm ci
 
       - name: Build 🏗️
         # Thay đổi từ 'spa' thành 'pwa'
