@@ -28,7 +28,7 @@
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-vue": "^8.5.0",
     "prettier": "^2.5.1",
-    "workbox-build": "^7.4.1",
+    "workbox-build": "^6.6.0",
     "workbox-cacheable-response": "^7.4.1",
     "workbox-core": "^7.4.1",
     "workbox-expiration": "^7.4.1",
