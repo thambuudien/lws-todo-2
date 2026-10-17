@@ -62,11 +62,11 @@ module.exports = configure(function (/* ctx */) {
 
       // publicPath: '/',
       // analyze: true,
-      env: {
-        GRAPHQL_URI: process.env.GRAPHQL_URI,
-        LWS_SECRET_TOKEN: process.env.LWS_SECRET_TOKEN,
-        LWS_HOTHAM_SECRET_TOKEN: process.env.LWS_HOTHAM_SECRET_TOKEN,
-      },
+      // env: {
+      //   GRAPHQL_URI: process.env.GRAPHQL_URI,
+      //   LWS_SECRET_TOKEN: process.env.LWS_SECRET_TOKEN,
+      //   LWS_HOTHAM_SECRET_TOKEN: process.env.LWS_HOTHAM_SECRET_TOKEN,
+      // },
       // env: {
       //   // GRAPHQL_URI: "https://longwebstudio.io.vn/wordpress/5ryt3z3skdlf",
       //   GRAPHQL_URI:
