@@ -17,7 +17,7 @@ moment.locale("vi");
 
 // HTTP connection to the API
 const httpLink = createHttpLink({
-  uri: "https://longwebstudio.io.vn/wordpress/5ryt3z3skdlf",
+  uri: process.env.GRAPHQL_URI,
 });
 
 const errorLink = onError(
@@ -41,7 +41,7 @@ const errorLink = onError(
             }
 
             // Use fetch for the refresh token mutation to avoid an infinite loop
-            fetch("https://longwebstudio.io.vn/wordpress/5ryt3z3skdlf", {
+            fetch(process.env.GRAPHQL_URI, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -105,7 +105,8 @@ const authLink = setContext((_, { headers }) => {
     headers: {
       ...headers,
       authorization: token ? `Bearer ${token}` : "",
-      "lws-secret-token": "LongWebStudio_GraphQL_Secure_Key_2026",
+      "lws-secret-token": process.env.LWS_SECRET_TOKEN,
+      "lws-hotham-secret-token": process.env.LWS_HOTHAM_SECRET_TOKEN
     },
   };
 });

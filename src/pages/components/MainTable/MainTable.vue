@@ -1,7 +1,7 @@
 <template>
   <div class="q-px-xs q-pb-xl">
     <!-- TRẠNG THÁI LOADING MẠNG -->
-    <div v-if="loading" class="text-center q-pa-xl">
+    <div v-if="loading && rows.length === 0" class="text-center q-pa-xl">
       <q-spinner-dots color="primary" size="40px" />
       <div class="text-grey-7 q-mt-sm text-caption">
         Đang bóc tách dữ liệu cục bộ...
@@ -32,6 +32,17 @@
         @fetchData="$emit('fetchData')"
       />
     </div>
+
+    <!-- NÚT TẢI THÊM -->
+    <div v-if="rows.length < totalRows && !loading" class="text-center q-mt-md">
+      <q-btn
+        label="Tải thêm"
+        color="primary"
+        outline
+        @click="$emit('loadMore')"
+        :loading="loadingMore"
+      />
+    </div>
   </div>
 </template>
 
@@ -43,9 +54,11 @@ import CardItem from "./CardItem.vue";
 const props = defineProps({
   rows: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
-  isBhxhMode: { type: Boolean, default: false }, // Nhận trạng thái Checkbox từ IndexPage
+  isBhxhMode: { type: Boolean, default: false },
+  totalRows: { type: Number, default: 0 },
+  loadingMore: { type: Boolean, default: false },
 });
-const emit = defineEmits(["edit", "fetchData"]);
+const emit = defineEmits(["edit", "fetchData", "loadMore"]);
 
 const $q = useQuasar();
 const expandedCards = ref([]);
@@ -56,20 +69,15 @@ const toggleExpand = (id) => {
     : [...expandedCards.value, id];
 };
 
-/**
- * 🧩 THUẬT TOÁN TẠO VĂN BẢN ĐƠN PHÂN HỆ ĐỘNG DỰA VÀO CHECKBOX (KHÔNG NHẮC GỘP)
- */
 const buildDynamicMessage = (item) => {
   let msg = `Kính gửi Ông/Bà ${item.hoTen},\n`;
 
   if (props.isBhxhMode) {
-    // CHẾ ĐỘ 1: TÍCH CHỌN CHECKBOX -> CHỈ NHẮC ĐÓNG TIỀN BHXH TỰ NGUYỆN
     msg += `Đại lý thu bảo hiểm xin thông báo: Sổ BHXH tự nguyện của Ông/Bà đến hạn đóng kỳ tiếp theo vào ngày ${
       item.bhxhDenNgay || "kỳ tới"
     }.\n`;
     msg += `Kính mong Ông/Bà chủ động chuẩn bị tài chính liên hệ Nhân viên thu để đóng tiền giữ tiến độ tham gia liên tục, bảo toàn thời gian tích lũy lương hưu an sinh.`;
   } else {
-    // CHẾ ĐỘ 2: KHÔNG TÍCH CHỌN CHECKBOX -> CHỈ NHẮC ĐÓNG TIỀN BHYT
     if (item.tinhTrangHanThe === "CHUA_CO_THE") {
       msg += `Đại lý thu bảo hiểm xin thông báo: Hồ sơ đăng ký tham gia BHYT mới đợt đầu của Ông/Bà đang được nộp chờ cấp mã số phát hành hạn thẻ mới.\n`;
     } else {

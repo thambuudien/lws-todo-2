@@ -4,7 +4,11 @@
     <KPIStats :rows="rawRows || []" />
 
     <!-- THANH TÌM KIẾM HỖN HỢP TÍCH HỢP CHECKBOX LỌC KẾT HỢP -->
-    <FilterBar @search="handleLocalSearch" @addNew="openAddDialog" @refresh="fetchData"/>
+    <FilterBar
+      @search="handleLocalSearch"
+      @addNew="openAddDialog"
+      @refresh="fetchData"
+    />
 
     <!-- THANH ĐIỀU HƯỚNG BỘ LỌC NGHIỆP VỤ (TỐI ƯU MOBILE CLICK) -->
     <div class="q-mb-md">
@@ -85,7 +89,8 @@
             : "Dữ liệu đồng bộ trực tuyến mới nhất"
         }}</span>
         <span class="text-grey-8 q-ml-sm">
-          (Đang hiển thị: {{ filteredRows.length }} hồ sơ)
+          (Đang hiển thị: {{ paginatedRows.length }} / {{ filteredRows.length }}
+          hồ sơ)
         </span>
       </div>
       <q-btn
@@ -102,11 +107,14 @@
 
     <!-- DANH SÁCH THẺ DI ĐỘNG PWA (MOBILE CARD LIST) -->
     <MainTable
-      :rows="filteredRows"
+      :rows="paginatedRows"
       :loading="loading"
       :is-bhxh-mode="onlyBhxhFilter"
+      :total-rows="filteredRows.length"
+      :loading-more="loadingMore"
       @edit="openEditDialog"
       @fetchData="fetchData"
+      @loadMore="handleLoadMore"
     />
 
     <!-- BIỂU MẪU DIALOG 29 TRƯỜNG NGHIỆP VỤ -->
@@ -120,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
 import { apolloClient } from "src/boot/apollo";
 import {
@@ -148,6 +156,12 @@ const isDataFromCache = ref(false);
 // Biến lưu trữ trạng thái bộ lọc từ FilterBar bắn về
 const searchText = ref("");
 const onlyBhxhFilter = ref(false);
+
+// Pagination Refs
+const paginatedRows = ref([]);
+const lastLoadedIndex = ref(0);
+const pageSize = 50;
+const loadingMore = ref(false);
 
 /**
  * ⚡ THUẬT TOÁN KẾT HỢP ĐA TẦNG CỤC BỘ TRÊN RAM (TIẾNG VIỆT KHÔNG DẤU CAMELCASE)
@@ -245,6 +259,25 @@ const filteredRows = computed(() => {
 
   return ketQua;
 });
+
+// Reset pagination when filters change
+watch(filteredRows, () => {
+  paginatedRows.value = filteredRows.value.slice(0, pageSize);
+  lastLoadedIndex.value = pageSize;
+});
+
+const handleLoadMore = () => {
+  loadingMore.value = true;
+  setTimeout(() => {
+    const nextItems = filteredRows.value.slice(
+      lastLoadedIndex.value,
+      lastLoadedIndex.value + pageSize
+    );
+    paginatedRows.value.push(...nextItems);
+    lastLoadedIndex.value += pageSize;
+    loadingMore.value = false;
+  }, 500); // Simulate network delay
+};
 
 // Nhận gộp gói dữ liệu filter truyền từ FilterBar
 const handleLocalSearch = (payload) => {

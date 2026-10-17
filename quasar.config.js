@@ -62,7 +62,18 @@ module.exports = configure(function (/* ctx */) {
 
       // publicPath: '/',
       // analyze: true,
-      // env: {},
+      env: {
+        GRAPHQL_URI: process.env.GRAPHQL_URI,
+        LWS_SECRET_TOKEN: process.env.LWS_SECRET_TOKEN,
+        LWS_HOTHAM_SECRET_TOKEN: process.env.LWS_HOTHAM_SECRET_TOKEN,
+      },
+      // env: {
+      //   // GRAPHQL_URI: "https://longwebstudio.io.vn/wordpress/5ryt3z3skdlf",
+      //   GRAPHQL_URI:
+      //     "https://hotham.vn/wordpress/rYkOy1HCCRD0JZZcrshVYaUR39QfcG15QWUC437BMM5Pk3gNLu",
+      //   LWS_SECRET_TOKEN: "LongWebStudio_GraphQL_Secure_Key_2026",
+      //   LWS_HOTHAM_SECRET_TOKEN: "f4e18c5d6c2645e5981a837904c7b8d3",
+      // },
       // rawDefine: {}
       // ignorePublicFolder: true,
       // minify: false,
