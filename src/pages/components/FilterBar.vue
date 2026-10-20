@@ -44,15 +44,26 @@
 
       <!-- Nút thêm mới / đồng bộ -->
       <div class="col-12 col-sm-3 text-right">
-        <q-btn
-          color="primary"
-          icon="add"
-          label="Thêm mới / Đồng bộ"
-          no-caps
-          class="full-width"
-          @click="$emit('addNew')"
-          unelevated
-        />
+        <div class="row q-gutter-x-sm">
+          <q-btn
+            color="primary"
+            icon="add"
+            label="Thêm mới"
+            no-caps
+            class="col"
+            @click="$emit('addNew')"
+            unelevated
+          />
+          <q-btn
+            color="primary"
+            icon="sync"
+            label="Đồng bộ"
+            no-caps
+            class="col"
+            @click="$emit('syncData')"
+            unelevated
+          />
+        </div>
       </div>
     </q-card-section>
   </q-card>
@@ -61,7 +72,7 @@
 <script setup>
 import { ref, watch } from "vue";
 
-const emit = defineEmits(["search", "addNew", "refresh"]);
+const emit = defineEmits(["search", "addNew", "refresh", "syncData"]);
 
 const searchText = ref("");
 const onlyBhxh = ref(false);

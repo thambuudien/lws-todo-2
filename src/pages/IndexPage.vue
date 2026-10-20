@@ -8,6 +8,7 @@
       @search="handleLocalSearch"
       @addNew="openAddDialog"
       @refresh="fetchData"
+      @syncData="syncDataSSM"
     />
 
     <!-- THANH ĐIỀU HƯỚNG BỘ LỌC NGHIỆP VỤ (TỐI ƯU MOBILE CLICK) -->
@@ -391,6 +392,50 @@ const openAddDialog = () => {
 const openEditDialog = (item) => {
   selectedForm.value = { ...item };
   formDialog.value = true;
+};
+
+const openLinkSsm = (customer) => {
+  const codeBhx = customer.maSoBhxh || "";
+  const fullName = encodeURIComponent(customer.hoTen || "");
+  const birthDate = customer.ngaySinh
+    ? encodeURIComponent(customer.ngaySinh)
+    : "";
+
+  let url = "";
+  if (onlyBhxhFilter.value) {
+    url = `https://ssm.vnpost.vn/qldv/tra-cuu/thong-tin-bhxh?maSoBHXH=${codeBhx}&hoTen=${fullName}&ngaySinhDt=${birthDate}`;
+  } else {
+    url = `https://ssm.vnpost.vn/qldv/tra-cuu/tra-cuu-thong-tin-the?maSoBHXH=${codeBhx}&hoTen=${fullName}&ngaySinhDt=${birthDate}`;
+  }
+  window.open(url, "_blank");
+};
+
+const syncDataSSM = async () => {
+  // Kiểm tra nếu danh sách khách hàng rỗng hoặc không tồn tại
+  if (!filteredRows.value || filteredRows.value.length === 0) {
+    // Bạn có thể thay thế bằng q.notify hoặc thông báo tùy ý
+    console.warn("Không có dữ liệu khách hàng để đồng bộ!");
+    return;
+  }
+
+  // Duyệt qua từng khách hàng trong danh sách
+  for (let i = 0; i < filteredRows.value.length; i++) {
+    const customer = filteredRows.value[i];
+
+    // Gọi hàm mở link tương ứng cho từng khách hàng
+    openLinkSsm(customer);
+
+    // Dừng lại 1 khoảng thời gian (ví dụ: 1.5 giây = 1500ms) trước khi mở tab tiếp theo
+    // Thời gian này giúp trình duyệt không chặn pop-up
+    if (i < filteredRows.value.length - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 6060));
+    }
+  }
+
+  // Sau khi duyệt hết tất cả, có thể gọi lại fetchData hoặc thông báo hoàn tất nếu muốn
+  setTimeout(() => {
+    emit("fetchData");
+  }, 6060);
 };
 
 onMounted(() => fetchData());
