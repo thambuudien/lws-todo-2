@@ -35,14 +35,40 @@
             ({{ formatNgaySinh(item.ngaySinh) }})
           </span>
         </div>
+        <q-item-label caption class="text-grey-7 q-mt-xs">
+          {{ item.diaChiLienHe }}
+        </q-item-label>
+        <q-item-label caption class="text-grey-7 q-mt-xs row items-center">
+          <span>Mã hộ: {{ item.maHoGiaDinh }}</span>
+          <q-btn
+            flat
+            round
+            dense
+            size="sm"
+            icon="search"
+            class="q-ml-xs"
+            @click.stop="$emit('searchByMaHoGiaDinh', item.maHoGiaDinh)"
+          />
+        </q-item-label>
+
+        <q-item-label caption class="text-grey-7 q-mt-xs row items-center">
+          <span>Mã tờ khai: {{ item.maToKhaiRieng }}</span>
+          <q-btn
+            flat
+            round
+            dense
+            size="sm"
+            icon="search"
+            class="q-ml-xs"
+            @click.stop="$emit('searchByMaHoGiaDinh', item.maToKhaiRieng)"
+          />
+        </q-item-label>
 
         <q-item-label
           caption
           class="text-weight-bold text-grey-7 q-mt-xs row items-center"
         >
-          <span
-            >Số thẻ/Mã số BHXH: {{ item.maSoTheBhyt || item.maSoBhxh }}</span
-          >
+          <span>Mã thẻ: {{ item.maSoTheBhyt || item.maSoBhxh }}</span>
           <q-btn
             flat
             round
@@ -58,6 +84,19 @@
             "
             class="q-ml-xs"
           />
+        </q-item-label>
+
+        <q-item-label caption class="text-grey-7 q-mt-xs col items-center">
+          <div>
+            <strong>Hạn thẻ:</strong>
+            {{ formatNgayBienLai(item.bhytTuNgay) }} →
+            <strong>{{ formatNgayBienLai(item.bhytDenNgay) }}</strong>
+          </div>
+          <strong>{{ item.noiKcbBanDau || "Chưa cập nhật" }}</strong>
+          <div>
+            <strong>5 năm liên tục:</strong>
+            {{ item.ngay5NamLienTuc || "Chưa cập nhật" }}
+          </div>
         </q-item-label>
 
         <!-- KHU VỰC BADGE ĐỘC QUYỀN ĐÃ HOÁN ĐỔI ĐỒNG BỘ DỰA TRÊN Ô CHECKBOX -->
@@ -158,6 +197,61 @@
             @click="$emit('edit', item)"
           />
         </div>
+        <div>
+          <template v-if="isBhxhMode">
+            <div class="row items-center q-mb-xs">
+              <q-icon
+                name="payments"
+                color="orange-8"
+                size="xs"
+                class="q-mr-xs"
+              />
+              <span class="text-weight-bold">{{
+                formatCurrency(item.soTienBhxh)
+              }}</span>
+            </div>
+            <div class="text-caption text-grey-7">
+              Ngày nộp: {{ formatNgayBienLai(item.ngayBienLaiBhxh) }}
+            </div>
+            <div class="text-caption text-grey-7">
+              <div>
+                <strong>Mức: {{ formatCurrency(item.mucThuNhapBhxh) }}</strong>
+              </div>
+              <div>
+                <strong>Đóng: {{ item.phuongThucDong || "" }}</strong> (tháng)
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <div class="row items-center q-mb-xs">
+              <q-icon
+                name="payments"
+                color="orange-8"
+                size="xs"
+                class="q-mr-xs"
+              />
+              <span class="text-weight-bold">{{
+                formatCurrency(item.soTienBhyt)
+              }}</span>
+            </div>
+            <div class="text-caption text-grey-7">
+              Ngày nộp: {{ formatNgayBienLai(item.ngayBienLaiBhyt) }}
+            </div>
+            <div>
+              <q-badge
+                :color="
+                  item.theoDoiCoQuanBhxh === 'Đã nhận kết quả phát sinh từ BHXH'
+                    ? 'orange'
+                    : 'teal'
+                "
+                dense
+                class="font-10"
+              >
+                {{ item.tinhTrangHanThe }}
+              </q-badge>
+            </div>
+          </template>
+        </div>
       </q-item-section>
     </q-item>
 
@@ -189,14 +283,25 @@ defineProps({
   isBhxhMode: { type: Boolean, default: false },
   smsLink: { type: String, default: "" },
 });
-defineEmits(["toggleExpand", "edit", "zalo", "fetchData", "loaiBoThanhVien"]);
+defineEmits([
+  "toggleExpand",
+  "edit",
+  "zalo",
+  "fetchData",
+  "loaiBoThanhVien",
+  "searchByMaHoGiaDinh",
+]);
 
 // Mốc thời gian thực tế hiện tại của hệ thống đại lý thu
 const homNay = moment("2026-10-12");
+const formatCurrency = (val) =>
+  val ? val.toLocaleString("vi-VN") + " đ" : "0 đ";
 
 const formatNgaySinh = (dateStr) =>
   dateStr ? moment(dateStr, "YYYY-MM-DD").format("DD/MM/YYYY") : "";
 
+const formatNgayBienLai = (dateStr) =>
+  dateStr ? moment(dateStr, "YYYY-MM-DD").format("DD/MM/YYYY") : "";
 /**
  * 🏥 SỬA LỖI LOGIC: HÀM TÍNH TOÁN ĐỘNG MÀU SẮC BADGE CHO BHYT TRÊN RAM
  */

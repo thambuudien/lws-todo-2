@@ -31,6 +31,7 @@
         @zalo="sendZaloDynamic"
         @fetchData="$emit('fetchData')"
         @loaiBoThanhVien="(val) => $emit('loaiBoThanhVien', val)"
+        @searchByMaHoGiaDinh="(val) => $emit('searchByMaHoGiaDinh', val)"
       />
     </div>
 
@@ -59,7 +60,13 @@ const props = defineProps({
   totalRows: { type: Number, default: 0 },
   loadingMore: { type: Boolean, default: false },
 });
-defineEmits(["edit", "fetchData", "loadMore", "loaiBoThanhVien"]);
+defineEmits([
+  "edit",
+  "fetchData",
+  "loadMore",
+  "loaiBoThanhVien",
+  "searchByMaHoGiaDinh",
+]);
 
 const $q = useQuasar();
 const expandedCards = ref([]);

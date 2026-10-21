@@ -117,6 +117,7 @@
       @fetchData="fetchData"
       @loadMore="handleLoadMore"
       @loaiBoThanhVien="loaiBoThanhVien"
+      @searchByMaHoGiaDinh="handleSearchByMaHoGiaDinh"
     />
 
     <!-- BIỂU MẪU DIALOG 29 TRƯỜNG NGHIỆP VỤ -->
@@ -175,78 +176,61 @@ const loaiBoThanhVien = (id) => {
   }
 };
 
+const handleSearchByMaHoGiaDinh = (maHoGiaDinh) => {
+  searchText.value = maHoGiaDinh;
+};
+
 /**
  * ⚡ THUẬT TOÁN KẾT HỢP ĐA TẦNG CỤC BỘ TRÊN RAM (TIẾNG VIỆT KHÔNG DẤU CAMELCASE)
  */
 const filteredRows = computed(() => {
-  if (!rawRows.value) return [];
+  if (!rawRows.value || rawRows.value.length === 0) return [];
 
-  // Chuẩn hóa tên biến tiếng Việt không dấu định dạng camelCase (Mốc hệ thống: 12/10/2026)
-  const homNay = moment("2026-10-12");
+  const homNay = moment();
   const thangHienTai = homNay.format("YYYY-MM");
-
-  // Mốc ranh giới áp dụng riêng cho phân hệ BHYT và BHXH
   const mocQuaHan90Ngay = moment(homNay).subtract(90, "days");
   const mocCuoiThangTiepTheo = moment(homNay).add(1, "month").endOf("month");
 
-  // BƯỚC 1: LỌC THEO CHIẾN DỊCH VÀ PHÂN HỆ ĐIỀU HƯỚNG CHUYÊN BIỆT
+  const isBhxh = onlyBhxhFilter.value;
+  const filterType = activeFilter.value;
+  const tuKhoa = searchText.value.trim().toLowerCase();
+
+  // BƯỚC 1: LỌC THEO CHIẾN DỊCH VÀ PHÂN HỆ ĐIỀU HƯỚNG
   let ketQua = rawRows.value.filter((item) => {
-    // Nếu tích chọn checkbox BHXH, loại ngay những người chưa từng tham gia BHXH
-    if (onlyBhxhFilter.value && item.soTienBhxh === 0) {
-      return false;
+    // Nếu tích chọn BHXH mà không có tiền đóng -> Loại luôn
+    if (isBhxh && item.soTienBhxh === 0) return false;
+
+    if (filterType === "ALL") return true;
+
+    if (filterType === "CHUA_THE") {
+      return !item.maSoTheBhyt || item.maSoTheBhyt.trim() === "";
     }
 
-    if (activeFilter.value === "ALL") return true;
-
-    if (activeFilter.value === "CHUA_THE") {
-      return (
-        item.tinhTrangHanThe === "CHUA_CO_THE" ||
-        !item.maSoTheBhyt ||
-        item.maSoTheBhyt.trim() === ""
-      );
-    }
-
-    // 🔥 PHÂN TÁCH LOGIC BỘ LỌC THỜI GIAN THEO ĐÚNG HÀM CHECKBOX KHÔNG DẤU CAMELCASE
-    if (onlyBhxhFilter.value) {
-      // 📊 PHÂN HỆ BHXH TỰ NGUYỆN: Kiểm tra và tính toán quá hạn theo Tháng trước
-      const ngayKiemTraStr =
-        item.nhacDongBhxh && item.nhacDongBhxh.trim() !== ""
-          ? item.nhacDongBhxh
-          : item.bhxhDenNgay;
+    if (isBhxh) {
+      // Phân hệ BHXH Tự nguyện
+      const ngayKiemTraStr = item.nhacDongBhxh;
       if (!ngayKiemTraStr) return false;
 
-      const mocThangBhxh = moment(ngayKiemTraStr, "YYYY-MM-DD").format(
-        "YYYY-MM"
-      );
+      const mocThangBhxh = ngayKiemTraStr.substring(0, 7); // Tối ưu hơn moment().format nếu format sẵn YYYY-MM-DD
 
-      if (activeFilter.value === "QUA_HAN_90") {
-        // QUY TẮC BHXH: Quá hạn đóng nghĩa là mốc tháng nằm ở Tháng trước
+      if (filterType === "QUA_HAN_90") {
         return mocThangBhxh < thangHienTai;
       }
-
-      if (activeFilter.value === "CAN_GIA_HAN") {
-        // Cần gia hạn BHXH: Kỳ nộp tiền nằm ở tháng hiện tại hoặc tháng tiếp theo
-        const mocCuoiBhxh = moment(ngayKiemTraStr, "YYYY-MM-DD").endOf("month");
-        return (
-          mocCuoiBhxh.isSameOrAfter(homNay) &&
-          mocCuoiBhxh.isSameOrBefore(mocCuoiThangTiepTheo)
-        );
+      if (filterType === "CAN_GIA_HAN") {
+        return mocThangBhxh === thangHienTai;
       }
     } else {
-      // 🏥 PHÂN HỆ BHYT: Kiểm tra chính xác theo từng Ngày hết hạn thẻ gốc
+      // Phân hệ BHYT
       if (!item.bhytDenNgay) return false;
       const hanTheBhyt = moment(item.bhytDenNgay, "YYYY-MM-DD");
 
-      if (activeFilter.value === "QUA_HAN_90") {
-        // QUY TẮC BHYT: Áp dụng mốc tính toán trễ hạn chính xác quá 90 ngày
+      if (filterType === "QUA_HAN_90") {
         return hanTheBhyt.isBefore(mocQuaHan90Ngay);
       }
-
-      if (activeFilter.value === "CAN_GIA_HAN") {
-        // Cần gia hạn BHYT: Hết hạn chưa quá 90 ngày và trước cuối tháng sau
+      if (filterType === "CAN_GIA_HAN") {
         return (
           hanTheBhyt.isSameOrAfter(mocQuaHan90Ngay) &&
-          hanTheBhyt.isSameOrBefore(mocCuoiThangTiepTheo)
+          hanTheBhyt.isBefore(mocCuoiThangTiepTheo)
         );
       }
     }
@@ -254,18 +238,31 @@ const filteredRows = computed(() => {
     return true;
   });
 
-  // BƯỚC 2: LỌC TỰ ĐỘNG TÌM KIẾM HỖN HỢP TRÊN BỘ NHỚ RAM
-  const tuKhoa = searchText.value.trim().toLowerCase();
+  // BƯỚC 2: LỌC TÌM KIẾM HỖN HỢP TRÊN BỘ NHỚ RAM
   if (tuKhoa !== "") {
     ketQua = ketQua.filter((item) => {
-      const trungTen = item.hoTen
-        ? item.hoTen.toLowerCase().includes(tuKhoa)
-        : false;
-      const trungSdt = item.soDienThoai
-        ? item.soDienThoai.includes(tuKhoa)
-        : false;
-      const trungCccd = item.maSoBhxh ? item.maSoBhxh.includes(tuKhoa) : false;
-      return trungTen || trungSdt || trungCccd;
+      const trungTen = (item.hoTen + " " + (item.ngaySinh || ""))
+        .toLowerCase()
+        .includes(tuKhoa);
+      const trungSdt = item.soDienThoai && item.soDienThoai.includes(tuKhoa);
+      const trungCccd = item.maSoBhxh && item.maSoBhxh.includes(tuKhoa);
+      const trungMaHoGiaDinh =
+        item.maHoGiaDinh && item.maHoGiaDinh.includes(tuKhoa);
+      const trungMaToKhaiRieng =
+        item.maToKhaiRieng && item.maToKhaiRieng.includes(tuKhoa);
+      const trungGhiChu =
+        item.ghiChu && item.ghiChu.toLowerCase().includes(tuKhoa);
+
+      // Lưu ý: Đoạn return gốc của bạn chỉ check 3 biến đầu,
+      // nếu bạn muốn tìm kiếm trên tất cả các trường đã khai báo ở trên thì mở rộng điều kiện OR dưới đây:
+      return (
+        trungTen ||
+        trungSdt ||
+        trungCccd ||
+        trungMaHoGiaDinh ||
+        trungMaToKhaiRieng ||
+        trungGhiChu
+      );
     });
   }
 

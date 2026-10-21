@@ -99,11 +99,7 @@
             dense
             class="font-10"
           >
-            {{
-              item.theoDoiCoQuanBhxh === "CHUA_NOP"
-                ? "Chưa nộp"
-                : "Đã nộp - Chờ cơ quan BHXH phát sinh hạn mới"
-            }}
+            {{ item.theoDoiCoQuanBhxh }}
           </q-badge>
         </div>
       </div>
