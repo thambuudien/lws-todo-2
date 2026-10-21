@@ -222,7 +222,7 @@
               </div>
             </div>
           </template>
-          <template v-else>
+          <template v-else-if="item.soTienBhyt">
             <div class="row items-center q-mb-xs">
               <q-icon
                 name="payments"
@@ -247,7 +247,7 @@
                 dense
                 class="font-10"
               >
-                {{ item.tinhTrangHanThe }}
+                {{ item.tinhTrangHanThe || "Đang cập nhật.." }}
               </q-badge>
             </div>
           </template>
