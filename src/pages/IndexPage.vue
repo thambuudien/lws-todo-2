@@ -69,7 +69,7 @@
             size="sm"
             color="indigo-7"
             class="full-width font-11"
-            label="Chưa có thẻ"
+            :label="onlyBhxhFilter ? 'Chưa cập nhật' : 'Chưa có thẻ'"
             @click="activeFilter = 'CHUA_THE'"
           />
         </div>
@@ -203,6 +203,9 @@ const filteredRows = computed(() => {
     if (filterType === "ALL") return true;
 
     if (filterType === "CHUA_THE") {
+      if (isBhxh) {
+        return !item.nhacDongBhxh || item.nhacDongBhxh.trim() === "";
+      }
       return !item.maSoTheBhyt || item.maSoTheBhyt.trim() === "";
     }
 

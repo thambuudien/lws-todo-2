@@ -38,7 +38,11 @@
         <q-item-label caption class="text-grey-7 q-mt-xs">
           {{ item.diaChiLienHe }}
         </q-item-label>
-        <q-item-label caption class="text-grey-7 q-mt-xs row items-center">
+        <q-item-label
+          v-if="item.maHoGiaDinh"
+          caption
+          class="text-grey-7 q-mt-xs row items-center"
+        >
           <span>Mã hộ: {{ item.maHoGiaDinh }}</span>
           <q-btn
             flat
@@ -51,7 +55,11 @@
           />
         </q-item-label>
 
-        <q-item-label caption class="text-grey-7 q-mt-xs row items-center">
+        <q-item-label
+          v-if="item.maToKhaiRieng"
+          caption
+          class="text-grey-7 q-mt-xs row items-center"
+        >
           <span>Mã tờ khai: {{ item.maToKhaiRieng }}</span>
           <q-btn
             flat
@@ -87,12 +95,21 @@
         </q-item-label>
 
         <q-item-label caption class="text-grey-7 q-mt-xs col items-center">
-          <div>
-            <strong>Hạn thẻ:</strong>
+          <div v-if="item.bhytDenNgay">
+            <strong>Từ:</strong>
             {{ formatNgayBienLai(item.bhytTuNgay) }} →
             <strong>{{ formatNgayBienLai(item.bhytDenNgay) }}</strong>
+            <q-badge
+              :color="getDynamicColorBhyt(item)"
+            >
+              {{ getDynamicLabelBhyt(item) }}
+            </q-badge>
           </div>
-          <strong>{{ item.noiKcbBanDau || "Chưa cập nhật" }}</strong>
+
+          <div>
+
+          </div>
+          <strong>Nơi KCB: </strong>{{ item.noiKcbBanDau || "Chưa cập nhật" }}
           <div>
             <strong>5 năm liên tục:</strong>
             {{ item.ngay5NamLienTuc || "Chưa cập nhật" }}
@@ -101,27 +118,14 @@
 
         <!-- KHU VỰC BADGE ĐỘC QUYỀN ĐÃ HOÁN ĐỔI ĐỒNG BỘ DỰA TRÊN Ô CHECKBOX -->
         <q-item-label caption class="row q-gutter-x-xs q-mt-xs">
-          <!-- 📈 CHẾ ĐỘ 1: ĐANG CHECKBOX CHỈ XEM CHIẾN DỊCH BHXH -->
-          <template v-if="isBhxhMode">
-            <q-badge
+          <q-badge
+          v-if="item.soTienBhxh"
               :color="getDynamicColorBhxh(item)"
               class="text-caption font-10 text-weight-bold"
             >
               <q-icon name="trending_up" size="14px" class="q-mr-xs" />
               BHXH: {{ getDynamicLabelBhxh(item) }}
             </q-badge>
-          </template>
-
-          <!-- 🏥 CHẾ ĐỘ 2: MẶC ĐỊNH CHỈ XEM CHIẾN DỊCH THEO HẠN THẺ BHYT (ĐÃ SỬA ĐỘNG) -->
-          <template v-else>
-            <q-badge
-              :color="getDynamicColorBhyt(item)"
-              class="text-caption font-10 text-weight-bold"
-            >
-              <q-icon name="medical_services" size="14px" class="q-mr-xs" />
-              BHYT: {{ getDynamicLabelBhyt(item) }}
-            </q-badge>
-          </template>
         </q-item-label>
       </q-item-section>
 
@@ -332,27 +336,24 @@ const getDynamicColorBhyt = (item) => {
  */
 const getDynamicLabelBhyt = (item) => {
   if (
-    item.tinhTrangHanThe === "CHUA_CO_THE" ||
     !item.bhytDenNgay ||
     item.bhytDenNgay.trim() === ""
   ) {
-    return "Mới tham gia (Chưa có thẻ)";
+    return "Chưa có thẻ";
   }
 
   const hanBhy = moment(item.bhytDenNgay, "YYYY-MM-DD");
-  const dinhDangNgay = hanBhy.format("DD/MM/YYYY");
 
   if (hanBhy.isBefore(homNay)) {
     const soNgayTre = homNay.diff(hanBhy, "days");
-    return `Quá hạn ${soNgayTre} ngày (${dinhDangNgay})`;
+    return `Quá hạn ${soNgayTre}`;
   }
-
+  const soNgayConLai = hanBhy.diff(homNay, "days");
   if (hanBhy.isSameOrBefore(moment(homNay).add(30, "days"))) {
-    const soNgayConLai = hanBhy.diff(homNay, "days");
-    return `Sắp hết hạn - Còn ${soNgayConLai} ngày (${dinhDangNgay})`;
+    return `Sắp hết hạn - Còn ${soNgayConLai}`;
   }
 
-  return `Còn hạn (${dinhDangNgay})`;
+  return `Còn hạn ${soNgayConLai}`;
 };
 
 /**
@@ -436,7 +437,7 @@ const getDynamicLabelBhxh = (item) => {
     item.nhacDongBhxh && item.nhacDongBhxh.trim() !== ""
       ? item.nhacDongBhxh
       : "";
-  if (!ngayKiemTraStr || ngayKiemTraStr.trim() === "") return "Đang tham gia";
+  if (!ngayKiemTraStr || ngayKiemTraStr.trim() === "") return "Chưa cập nhật";
 
   const ngayMucTieu = moment(ngayKiemTraStr, "YYYY-MM-DD");
   const thangHienTai = homNay.format("YYYY-MM");
