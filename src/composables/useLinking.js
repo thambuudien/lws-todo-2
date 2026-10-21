@@ -1,46 +1,29 @@
-import moment from "moment";
-
 /**
  * @description Composable function để chứa các hàm xử lý liên kết ngoài
+ * @returns {{ openLinkSsm: Function }}
  */
-export function useLinking() {
-  /**
-   * 🛠️ Mở link tra cứu trên cổng BẢO HIỂM XÃ HỘI VIỆT NAM (VSS)
-   * @param {object} customer - Đối tượng khách hàng chứa thông tin cần tra cứu.
-   */
-  const openLinkVss = (customer) => {
-    const codeBhy = customer.maSoBhxh || "";
-    const fullName = encodeURIComponent(customer.hoTen || "");
-
-    let birthDate = "";
-    if (customer.ngaySinh) {
-      birthDate = encodeURIComponent(
-        moment(customer.ngaySinh, "YYYY-MM-DD").format("DD/MM/YYYY")
-      );
-    }
-
-    const url = `https://baohiemxahoi.gov.vn/tracuu/Pages/tra-cuu-thoi-han-su-dung-the-bhyt.aspx?mathe=${codeBhy}&hoten=${fullName}&ngaysinh=${birthDate}`;
-    window.open(url, "_blank");
-  };
-
+export function useExternalLinks() {
   /**
    * 🛠️ Mở link tra cứu trên hệ thống SSM VNPOST
    * @param {object} customer - Đối tượng khách hàng chứa thông tin cần tra cứu.
    */
-  const openLinkSsm = (customer) => {
-    const codeBhxh = customer.maSoBhxh || "";
+  const openLinkSsm = (customer, isBHXH) => {
+    const codeBhx = customer.maSoBhxh || "";
     const fullName = encodeURIComponent(customer.hoTen || "");
     const birthDate = customer.ngaySinh
       ? encodeURIComponent(customer.ngaySinh)
       : "";
 
-    // Lưu ý: URL này là giả định dựa trên các tham số, cần được xác nhận lại nếu có URL chính thức
-    const url = `https://ssm.vnpost.vn/host/ssm/public/process/search?ma_the=${codeBhxh}&ho_ten=${fullName}&ngay_sinh=${birthDate}`;
+    let url = "";
+    if (isBHXH) {
+      url = `https://ssm.vnpost.vn/qldv/tra-cuu/thong-tin-bhxh?maSoBHXH=${codeBhx}&hoTen=${fullName}&ngaySinhDt=${birthDate}`;
+    } else {
+      url = `https://ssm.vnpost.vn/qldv/tra-cuu/tra-cuu-thong-tin-the?maSoBHXH=${codeBhx}&hoTen=${fullName}&ngaySinhDt=${birthDate}`;
+    }
     window.open(url, "_blank");
   };
 
   return {
-    openLinkVss,
     openLinkSsm,
   };
 }

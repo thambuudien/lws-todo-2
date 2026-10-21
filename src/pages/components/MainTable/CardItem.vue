@@ -36,15 +36,26 @@
           </span>
         </div>
 
-        <q-item-label caption class="text-weight-bold text-grey-7 q-mt-xs row items-center">
-          <span>Số thẻ/Mã số BHXH: {{ item.maSoTheBhyt || item.maSoBhxh }}</span>
+        <q-item-label
+          caption
+          class="text-weight-bold text-grey-7 q-mt-xs row items-center"
+        >
+          <span
+            >Số thẻ/Mã số BHXH: {{ item.maSoTheBhyt || item.maSoBhxh }}</span
+          >
           <q-btn
             flat
             round
             dense
             size="sm"
             icon="content_copy"
-            @click.stop="copy(`${item.hoTen}, ${item.maSoBhxh}, ${new Date(item.ngaySinh).toLocaleDateString('vi-VN')}, `)"
+            @click.stop="
+              copy(
+                `${item.hoTen}, ${item.maSoBhxh}, ${new Date(
+                  item.ngaySinh
+                ).toLocaleDateString('vi-VN')}, `
+              )
+            "
             class="q-ml-xs"
           />
         </q-item-label>
@@ -76,7 +87,49 @@
       </q-item-section>
 
       <!-- THANH NÚT HÀNH ĐỘNG GỌI VÀ SỬA NHANH -->
-      <q-item-section side>
+      <q-item-section side top>
+        <div class="q-gutter-x-xs">
+          <q-btn size="12px" flat dense round icon="more_horiz">
+            <q-menu>
+              <q-list style="min-width: 300px">
+                <q-item clickable v-close-popup>
+                  <q-item-section @click="openPviWindow(item, 'bhyt-renew')"
+                    >Gia hạn nối tiếp thẻ BHYT với PVI</q-item-section
+                  >
+                </q-item>
+                <q-item clickable v-close-popup>
+                  <q-item-section @click="openPviWindow(item, 'bhxh-renew')"
+                    >Gia hạn nối tiếp BHXH với PVI</q-item-section
+                  >
+                </q-item>
+                <q-item clickable v-close-popup>
+                  <q-item-section @click="openPviWindow(item, 'bhyt-new')"
+                    >Đăng ký mới BHYT với PVI</q-item-section
+                  >
+                </q-item>
+                <q-item clickable v-close-popup>
+                  <q-item-section @click="openPviWindow(bhyt, 'bhxh-new')"
+                    >Đăng ký mới BHXH với PVI</q-item-section
+                  >
+                </q-item>
+
+                <q-item clickable v-close-popup>
+                  <q-item-section @click="openLinkSsm(item, isBhxhMode)"
+                    >Tra cứu thông tin thẻ BHYT trên SSM</q-item-section
+                  >
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+          <q-btn
+            @click="$emit('loaiBoThanhVien', item.id)"
+            size="12px"
+            flat
+            dense
+            round
+            icon="close"
+          />
+        </div>
         <div class="row items-center q-gutter-x-xs">
           <q-btn
             size="sm"
@@ -125,8 +178,10 @@
 <script setup>
 import moment from "moment";
 import CardExpansion from "./CardExpansion.vue";
+import { useExternalLinks } from "../../../composables/useLinking";
 import { useQuasar, copyToClipboard } from "quasar";
 const $q = useQuasar();
+const { openLinkSsm } = useExternalLinks();
 
 defineProps({
   item: { type: Object, required: true },
@@ -134,7 +189,7 @@ defineProps({
   isBhxhMode: { type: Boolean, default: false },
   smsLink: { type: String, default: "" },
 });
-defineEmits(["toggleExpand", "edit", "zalo", "fetchData"]);
+defineEmits(["toggleExpand", "edit", "zalo", "fetchData", "loaiBoThanhVien"]);
 
 // Mốc thời gian thực tế hiện tại của hệ thống đại lý thu
 const homNay = moment("2026-10-12");
@@ -239,6 +294,33 @@ const copy = (text) => {
         icon: "report_problem",
       });
     });
+};
+
+const openPviWindow = (bhyt, type) => {
+  const maSo = bhyt.maSoBhxh;
+  const hoTen = bhyt.hoTen || bhyt.hoTen;
+  const date = new Date(bhyt.ngaySinh);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  const ngaySinh = `${day}/${month}/${year}`;
+  let url = `https://bhxh.pvi.com.vn/#/`;
+
+  switch (type) {
+    case "bhyt-renew":
+      url += `bhyt/bhyt-renew?ms=${maSo}&ten=${hoTen}&ns=${ngaySinh}`;
+      break;
+    case "bhxh-renew":
+      url += `bhxh/bhxh-renew?ms=${maSo}&ten=${hoTen}&ns=${ngaySinh}`;
+      break;
+    case "bhyt-new":
+      url += `bhyt/bhyt-new?ms=${maSo}&ten=${hoTen}&ns=${ngaySinh}`;
+      break;
+    case "bhxh-new":
+      url += `bhxh/bhxh-new?ms=${maSo}&ten=${hoTen}&ns=${ngaySinh}`;
+      break;
+  }
+  window.open(url, "_blank");
 };
 
 /**

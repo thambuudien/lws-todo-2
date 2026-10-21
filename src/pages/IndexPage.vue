@@ -116,6 +116,7 @@
       @edit="openEditDialog"
       @fetchData="fetchData"
       @loadMore="handleLoadMore"
+      @loaiBoThanhVien="loaiBoThanhVien"
     />
 
     <!-- BIỂU MẪU DIALOG 29 TRƯỜNG NGHIỆP VỤ -->
@@ -144,6 +145,9 @@ import FilterBar from "./components/FilterBar.vue";
 import MainTable from "./components/MainTable/MainTable.vue";
 import FormDialog from "./components/FormDialog/FormDialog.vue";
 
+import { useExternalLinks } from "../composables/useLinking.js";
+const { openLinkSsm } = useExternalLinks();
+
 const $q = useQuasar();
 
 const rawRows = ref([]);
@@ -163,6 +167,13 @@ const paginatedRows = ref([]);
 const lastLoadedIndex = ref(0);
 const pageSize = 50;
 const loadingMore = ref(false);
+
+const loaiBoThanhVien = (id) => {
+  const index = paginatedRows.value.findIndex((item) => item.id === id);
+  if (index !== -1) {
+    paginatedRows.value.splice(index, 1);
+  }
+};
 
 /**
  * ⚡ THUẬT TOÁN KẾT HỢP ĐA TẦNG CỤC BỘ TRÊN RAM (TIẾNG VIỆT KHÔNG DẤU CAMELCASE)
@@ -394,48 +405,38 @@ const openEditDialog = (item) => {
   formDialog.value = true;
 };
 
-const openLinkSsm = (customer) => {
-  const codeBhx = customer.maSoBhxh || "";
-  const fullName = encodeURIComponent(customer.hoTen || "");
-  const birthDate = customer.ngaySinh
-    ? encodeURIComponent(customer.ngaySinh)
-    : "";
-
-  let url = "";
-  if (onlyBhxhFilter.value) {
-    url = `https://ssm.vnpost.vn/qldv/tra-cuu/thong-tin-bhxh?maSoBHXH=${codeBhx}&hoTen=${fullName}&ngaySinhDt=${birthDate}`;
-  } else {
-    url = `https://ssm.vnpost.vn/qldv/tra-cuu/tra-cuu-thong-tin-the?maSoBHXH=${codeBhx}&hoTen=${fullName}&ngaySinhDt=${birthDate}`;
-  }
-  window.open(url, "_blank");
-};
-
 const syncDataSSM = async () => {
   // Kiểm tra nếu danh sách khách hàng rỗng hoặc không tồn tại
-  if (!filteredRows.value || filteredRows.value.length === 0) {
-    // Bạn có thể thay thế bằng q.notify hoặc thông báo tùy ý
-    console.warn("Không có dữ liệu khách hàng để đồng bộ!");
+  if (!paginatedRows.value || paginatedRows.value.length === 0) {
+    $q.notify({
+      color: "negative",
+      message: "Không có dữ liệu khách hàng để đồng bộ!",
+    });
     return;
   }
 
   // Duyệt qua từng khách hàng trong danh sách
-  for (let i = 0; i < filteredRows.value.length; i++) {
-    const customer = filteredRows.value[i];
+  for (let i = 0; i < paginatedRows.value.length; i++) {
+    const customer = paginatedRows.value[i];
 
     // Gọi hàm mở link tương ứng cho từng khách hàng
-    openLinkSsm(customer);
+    openLinkSsm(customer, onlyBhxhFilter.value);
 
     // Dừng lại 1 khoảng thời gian (ví dụ: 1.5 giây = 1500ms) trước khi mở tab tiếp theo
     // Thời gian này giúp trình duyệt không chặn pop-up
-    if (i < filteredRows.value.length - 1) {
+    if (i < paginatedRows.value.length - 1) {
       await new Promise((resolve) => setTimeout(resolve, 6060));
     }
   }
 
   // Sau khi duyệt hết tất cả, có thể gọi lại fetchData hoặc thông báo hoàn tất nếu muốn
   setTimeout(() => {
-    emit("fetchData");
+    fetchData();
   }, 6060);
+  $q.notify({
+    color: "positive",
+    message: "Đã đồng bộ tất cả khách hàng thành công!",
+  });
 };
 
 onMounted(() => fetchData());

@@ -30,6 +30,7 @@
         @edit="(val) => $emit('edit', val)"
         @zalo="sendZaloDynamic"
         @fetchData="$emit('fetchData')"
+        @loaiBoThanhVien="(val) => $emit('loaiBoThanhVien', val)"
       />
     </div>
 
@@ -58,7 +59,7 @@ const props = defineProps({
   totalRows: { type: Number, default: 0 },
   loadingMore: { type: Boolean, default: false },
 });
-const emit = defineEmits(["edit", "fetchData", "loadMore"]);
+defineEmits(["edit", "fetchData", "loadMore", "loaiBoThanhVien"]);
 
 const $q = useQuasar();
 const expandedCards = ref([]);
