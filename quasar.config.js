@@ -12,7 +12,7 @@ module.exports = configure(function (/* ctx */) {
       errors: true,
     },
 
-    boot: ["apollo"],
+    boot: ["apollo", "firebase"],
 
     css: ["app.scss"],
 
