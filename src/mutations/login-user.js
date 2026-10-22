@@ -14,3 +14,18 @@ export const LOGIN_USER = gql`
     }
   }
 `;
+
+export const LOGIN_WITH_FIREBASE = gql`
+  mutation LoginWithFirebase($idToken: String!) {
+    loginWithFirebase(input: {idToken: $idToken}) {
+      authToken
+      refreshToken
+      user {
+        id
+        name
+        databaseId
+        email
+      }
+    }
+  }
+`;

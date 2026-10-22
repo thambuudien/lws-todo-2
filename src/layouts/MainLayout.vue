@@ -328,7 +328,6 @@ const confirmLogout = () => {
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("currentUserName");
     localStorage.removeItem("user");
-    apolloClient.clearStore();
     router.push({ name: "login" });
   });
 };
