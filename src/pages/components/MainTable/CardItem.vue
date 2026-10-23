@@ -27,13 +27,15 @@
             "
             size="22px"
           />
-          <span class="ellipsis">{{ item.hoTen }}</span>
-          <span
+          <span class="ellipsis"
+            >{{ item.hoTen }} {{ item.ngaySinh.slice(0, 4) }}</span
+          >
+          <!-- <span
             class="text-caption text-grey-7 text-weight-medium"
             v-if="item.ngaySinh"
           >
             ({{ formatNgaySinh(item.ngaySinh) }})
-          </span>
+          </span> -->
         </div>
         <q-item-label caption class="text-grey-7 q-mt-xs">
           {{ item.diaChiLienHe }}
@@ -42,41 +44,41 @@
           v-if="item.maHoGiaDinh"
           caption
           class="text-grey-7 q-mt-xs row items-center"
-        >
-          <span>Mã hộ: {{ item.maHoGiaDinh }}</span>
-          <q-btn
+          ><q-btn
             flat
             round
             dense
             size="sm"
             icon="search"
-            class="q-ml-xs"
+            class="q-mr-xs"
             @click.stop="$emit('searchByMaHoGiaDinh', item.maHoGiaDinh)"
           />
+          <span>{{ item.maHoGiaDinh }} - Mã HGD</span>
         </q-item-label>
 
         <q-item-label
           v-if="item.maToKhaiRieng"
           caption
           class="text-grey-7 q-mt-xs row items-center"
-        >
-          <span>Mã tờ khai: {{ item.maToKhaiRieng }}</span>
-          <q-btn
+          ><q-btn
             flat
             round
             dense
             size="sm"
             icon="search"
-            class="q-ml-xs"
+            class="q-mr-xs"
             @click.stop="$emit('searchByMaHoGiaDinh', item.maToKhaiRieng)"
           />
+          <span>{{ item.maToKhaiRieng }} - TKR</span>
         </q-item-label>
 
         <q-item-label
           caption
           class="text-weight-bold text-grey-7 q-mt-xs row items-center"
         >
-          <span>Mã thẻ: {{ item.maSoTheBhyt || item.maSoBhxh }}</span>
+          <span
+            >Mã thẻ: {{ maskedCode(item.maSoTheBhyt || item.maSoBhxh) }}</span
+          >
           <q-btn
             flat
             round
@@ -99,16 +101,13 @@
             <strong>Từ:</strong>
             {{ formatNgayBienLai(item.bhytTuNgay) }} →
             <strong>{{ formatNgayBienLai(item.bhytDenNgay) }}</strong>
-            <q-badge
-              :color="getDynamicColorBhyt(item)"
-            >
+          </div>
+          <div>
+            <q-badge :color="getDynamicColorBhyt(item)">
               {{ getDynamicLabelBhyt(item) }}
             </q-badge>
           </div>
 
-          <div>
-
-          </div>
           <strong>Nơi KCB: </strong>{{ item.noiKcbBanDau || "Chưa cập nhật" }}
           <div>
             <strong>5 năm liên tục:</strong>
@@ -119,13 +118,13 @@
         <!-- KHU VỰC BADGE ĐỘC QUYỀN ĐÃ HOÁN ĐỔI ĐỒNG BỘ DỰA TRÊN Ô CHECKBOX -->
         <q-item-label caption class="row q-gutter-x-xs q-mt-xs">
           <q-badge
-          v-if="item.soTienBhxh"
-              :color="getDynamicColorBhxh(item)"
-              class="text-caption font-10 text-weight-bold"
-            >
-              <q-icon name="trending_up" size="14px" class="q-mr-xs" />
-              BHXH: {{ getDynamicLabelBhxh(item) }}
-            </q-badge>
+            v-if="item.soTienBhxh"
+            :color="getDynamicColorBhxh(item)"
+            class="text-caption font-10 text-weight-bold"
+          >
+            <q-icon name="trending_up" size="14px" class="q-mr-xs" />
+            BHXH: {{ getDynamicLabelBhxh(item) }}
+          </q-badge>
         </q-item-label>
       </q-item-section>
 
@@ -243,16 +242,19 @@
             </div>
             <div>
               <q-badge
-                :color="
-                  item.theoDoiCoQuanBhxh === 'Đã nhận kết quả phát sinh từ BHXH'
-                    ? 'orange'
-                    : 'teal'
-                "
-                dense
-                class="font-10"
-              >
-                {{ item.tinhTrangHanThe || "Đang cập nhật.." }}
-              </q-badge>
+  :color="item.theoDoiCoQuanBhxh === 'Đã nhận kết quả phát sinh từ BHXH' ? 'orange' : 'teal'"
+  dense
+  class="font-10 ellipsis inline-block"
+  style="max-width: 120px;"
+>
+  {{ item.tinhTrangHanThe || "Đang cập nhật.." }}
+
+  <!-- Hiển thị đầy đủ nội dung khi rê chuột vào nếu chuỗi bị dài -->
+  <q-tooltip v-if="item.tinhTrangHanThe" anchor="top middle" self="bottom middle">
+    {{ item.tinhTrangHanThe }}
+  </q-tooltip>
+</q-badge>
+
             </div>
           </template>
         </div>
@@ -300,9 +302,19 @@ defineEmits([
 const homNay = moment("2026-10-12");
 const formatCurrency = (val) =>
   val ? val.toLocaleString("vi-VN") + " đ" : "0 đ";
+const maskedCode = (codeString) => {
+  if (typeof codeString !== 'string' || codeString.length <= 6) return "***";
 
-const formatNgaySinh = (dateStr) =>
-  dateStr ? moment(dateStr, "YYYY-MM-DD").format("DD/MM/YYYY") : "";
+  const visibleLen = 3;
+  const maskedLen = codeString.length - (visibleLen * 2);
+
+  return codeString.slice(0, visibleLen) + "*".repeat(maskedLen) + codeString.slice(-visibleLen);
+};
+
+const maskPhoneNumber = (phoneString) =>
+  (phoneString && phoneString.length >= 10)
+    ? `${phoneString.slice(0, 4)}****${phoneString.slice(-2)}`
+    : "***";
 
 const formatNgayBienLai = (dateStr) =>
   dateStr ? moment(dateStr, "YYYY-MM-DD").format("DD/MM/YYYY") : "";
@@ -335,10 +347,7 @@ const getDynamicColorBhyt = (item) => {
  * 🏥 SỬA LỖI LOGIC: HÀM HIỂN THỊ VĂN BẢN TIẾNG VIỆT ĐỘNG CHO HẠN THẺ BHYT
  */
 const getDynamicLabelBhyt = (item) => {
-  if (
-    !item.bhytDenNgay ||
-    item.bhytDenNgay.trim() === ""
-  ) {
+  if (!item.bhytDenNgay || item.bhytDenNgay.trim() === "") {
     return "Chưa có thẻ";
   }
 
