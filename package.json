@@ -1,6 +1,6 @@
 {
-  "name": "LWS Sổ Thu",
-  "description": "Sổ thu BHXH, BHYT nhắc tái tục.",
+  "name": "ANLO",
+  "description": "Sổ nhắc hạn BHXH, BHYT không sót 1 ai.",
   "private": true,
   "scripts": {
     "dev": "npx update-browserslist-db@latest && quasar dev",

@@ -113,6 +113,25 @@
             <strong>5 năm liên tục:</strong>
             {{ item.ngay5NamLienTuc || "Chưa cập nhật" }}
           </div>
+          <div>
+
+            <strong>Số ĐT: </strong>
+              <a :href="`tel:${item.soDienThoai}`"
+              >{{ maskPhoneNumber(item.soDienThoai) }}
+            </a>
+            <q-btn
+              v-if="item.soDienThoai"
+              flat
+              round
+              dense
+              size="sm"
+              color="green-7"
+              icon="content_copy"
+              class="q-ml-sm"
+              @click.stop="copy(item.soDienThoai)"
+            />
+
+          </div>
         </q-item-label>
 
         <!-- KHU VỰC BADGE ĐỘC QUYỀN ĐÃ HOÁN ĐỔI ĐỒNG BỘ DỰA TRÊN Ô CHECKBOX -->
@@ -242,19 +261,26 @@
             </div>
             <div>
               <q-badge
-  :color="item.theoDoiCoQuanBhxh === 'Đã nhận kết quả phát sinh từ BHXH' ? 'orange' : 'teal'"
-  dense
-  class="font-10 ellipsis inline-block"
-  style="max-width: 120px;"
->
-  {{ item.tinhTrangHanThe || "Đang cập nhật.." }}
+                :color="
+                  item.theoDoiCoQuanBhxh === 'Đã nhận kết quả phát sinh từ BHXH'
+                    ? 'orange'
+                    : 'teal'
+                "
+                dense
+                class="font-10 ellipsis inline-block"
+                style="max-width: 120px"
+              >
+                {{ item.tinhTrangHanThe || "Đang cập nhật.." }}
 
-  <!-- Hiển thị đầy đủ nội dung khi rê chuột vào nếu chuỗi bị dài -->
-  <q-tooltip v-if="item.tinhTrangHanThe" anchor="top middle" self="bottom middle">
-    {{ item.tinhTrangHanThe }}
-  </q-tooltip>
-</q-badge>
-
+                <!-- Hiển thị đầy đủ nội dung khi rê chuột vào nếu chuỗi bị dài -->
+                <q-tooltip
+                  v-if="item.tinhTrangHanThe"
+                  anchor="top middle"
+                  self="bottom middle"
+                >
+                  {{ item.tinhTrangHanThe }}
+                </q-tooltip>
+              </q-badge>
             </div>
           </template>
         </div>
@@ -299,20 +325,24 @@ defineEmits([
 ]);
 
 // Mốc thời gian thực tế hiện tại của hệ thống đại lý thu
-const homNay = moment("2026-10-12");
+const homNay = moment(new Date());
 const formatCurrency = (val) =>
   val ? val.toLocaleString("vi-VN") + " đ" : "0 đ";
 const maskedCode = (codeString) => {
-  if (typeof codeString !== 'string' || codeString.length <= 6) return "***";
+  if (typeof codeString !== "string" || codeString.length <= 6) return "***";
 
   const visibleLen = 3;
-  const maskedLen = codeString.length - (visibleLen * 2);
+  const maskedLen = codeString.length - visibleLen * 2;
 
-  return codeString.slice(0, visibleLen) + "*".repeat(maskedLen) + codeString.slice(-visibleLen);
+  return (
+    codeString.slice(0, visibleLen) +
+    "*".repeat(maskedLen) +
+    codeString.slice(-visibleLen)
+  );
 };
 
 const maskPhoneNumber = (phoneString) =>
-  (phoneString && phoneString.length >= 10)
+  phoneString && phoneString.length >= 10
     ? `${phoneString.slice(0, 4)}****${phoneString.slice(-2)}`
     : "***";
 
@@ -355,14 +385,14 @@ const getDynamicLabelBhyt = (item) => {
 
   if (hanBhy.isBefore(homNay)) {
     const soNgayTre = homNay.diff(hanBhy, "days");
-    return `Quá hạn ${soNgayTre}`;
+    return `Quá hạn ${soNgayTre} ngày`;
   }
   const soNgayConLai = hanBhy.diff(homNay, "days");
   if (hanBhy.isSameOrBefore(moment(homNay).add(30, "days"))) {
-    return `Sắp hết hạn - Còn ${soNgayConLai}`;
+    return `Sắp hết hạn - Còn ${soNgayConLai} ngày`;
   }
 
-  return `Còn hạn ${soNgayConLai}`;
+  return `Còn hạn ${soNgayConLai} ngày`;
 };
 
 /**
@@ -398,7 +428,7 @@ const copy = (text) => {
     .then(() => {
       $q.notify({
         color: "positive",
-        message: "Đã sao chép vào clipboard",
+        message: `Đã sao chép vào clipboard: ${text}`,
         icon: "content_copy",
       });
     })

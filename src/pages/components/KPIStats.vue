@@ -6,7 +6,7 @@
         <q-card-section class="q-pa-sm row items-center justify-between no-wrap">
           <div>
             <div class="text-h5 text-weight-bolder">{{ rows.length }}</div>
-            <div class="text-caption opacity-80 font-11">Tổng số hộ</div>
+            <div class="text-caption opacity-80 font-11">Tổng số</div>
           </div>
           <q-icon name="groups" size="sm" class="opacity-30" />
         </q-card-section>
@@ -62,7 +62,7 @@ const props = defineProps({
   rows: { type: Array, default: () => [] }
 })
 
-const HOM_NAY = moment('2026-10-12')
+const HOM_NAY = moment(new Date())
 
 const bhytSapHetHanCount = computed(() => {
   return props.rows.filter(item => {
@@ -74,17 +74,16 @@ const bhytSapHetHanCount = computed(() => {
 
 const bhxhSapHetHanCount = computed(() => {
   return props.rows.filter(item => {
-    if (!item.bhxhDenNgay) return false
-    const d = moment(item.bhxhDenNgay, 'YYYY-MM-DD')
-    return d.isSameOrAfter(HOM_NAY) && d.isBefore(moment(HOM_NAY).add(30, 'days'))
+    if (!item.nhacDongBhxh) return false
+    return moment(item.nhacDongBhxh, 'YYYY-MM-DD').isSame(HOM_NAY, 'month')
   }).length
 })
 
 const totalQuaHanCount = computed(() => {
   return props.rows.filter(item => {
     const b = item.bhytDenNgay ? moment(item.bhytDenNgay, 'YYYY-MM-DD').isBefore(HOM_NAY) : false
-    const x = item.bhxhDenNgay ? moment(item.bhxhDenNgay, 'YYYY-MM-DD').isBefore(HOM_NAY) : false
-    return b || x
+    const x = item.nhacDongBhxh ? moment(item.nhacDongBhxh, 'YYYY-MM-DD').isBefore(HOM_NAY, 'month') : false
+    return  b || x
   }).length
 })
 </script>
