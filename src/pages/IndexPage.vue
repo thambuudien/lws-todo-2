@@ -187,7 +187,7 @@ const filteredRows = computed(() => {
   if (!rawRows.value || rawRows.value.length === 0) return [];
 
   const homNay = moment();
-  const thangHienTai = homNay.format("YYYY-MM");
+  const thangHienTai = homNay.format("YYYY-MM"); // Định dạng "YYYY-MM"
   const mocQuaHan90Ngay = moment(homNay).subtract(90, "days");
   const mocCuoiThangTiepTheo = moment(homNay).add(1, "month").endOf("month");
 
@@ -210,25 +210,54 @@ const filteredRows = computed(() => {
     }
 
     if (isBhxh) {
-      // Phân hệ BHXH Tự nguyện
-      const ngayKiemTraStr = item.nhacDongBhxh;
-      const ngayDongBHXH = item.ngayBienLaiBhxh
-      if (!ngayKiemTraStr || !ngayDongBHXH) return false;
+      // --- PHÂN HỆ BHXH TỰ NGUYỆN ---
+      const ngayDongBHXH = item.ngayBienLaiBhxh;
+      if (!ngayDongBHXH) return false;
 
-      const mocThangBhxh = ngayKiemTraStr.substring(0, 7); // Tối ưu hơn moment().format nếu format sẵn YYYY-MM-DD
       const thangDongBhxh = ngayDongBHXH.substring(0, 7);
 
+      // Nếu vừa đóng trong tháng hiện tại -> Đã đóng xong, loại ra
+      if (thangDongBhxh === thangHienTai) {
+        return false;
+      }
+
+      const phuongThuc = Number(item.phuongThucDong) || 1; // 1, 3, 6, 12 tháng
+      const ngayHetHanBhxh = moment(ngayDongBHXH, "YYYY-MM-DD").add(
+        phuongThuc,
+        "months"
+      );
 
       if (filterType === "QUA_HAN_90") {
-        return mocThangBhxh < thangHienTai;
+        return homNay.isAfter(ngayHetHanBhxh);
       }
       if (filterType === "CAN_GIA_HAN") {
-        return mocThangBhxh === thangHienTai && thangDongBhxh === thangHienTai;
+        const mocCanGiaHan = moment(ngayHetHanBhxh).subtract(30, "days");
+        return (
+          homNay.isSameOrAfter(mocCanGiaHan) &&
+          homNay.isSameOrBefore(ngayHetHanBhxh)
+        );
       }
     } else {
-      // Phân hệ BHYT
-      if (!item.bhytDenNgay) return false;
-      const hanTheBhyt = moment(item.bhytDenNgay, "YYYY-MM-DD");
+      // --- PHÂN HỆ BHYT ---
+      let hanTheBhyt = null;
+
+      if (item.bhytDenNgay) {
+        // Ưu tiên 1: Lấy theo bhytDenNgay nếu có
+        hanTheBhyt = moment(item.bhytDenNgay, "YYYY-MM-DD");
+      } else if (item.ngayBienLaiBhyt) {
+        // Ưu tiên 2: Nếu không có bhytDenNgay, lấy ngày nộp tiền cộng thêm 12 tháng (mặc định thẻ BHYT 1 năm)
+        const thangDongBhyt = item.ngayBienLaiBhyt.substring(0, 7);
+        if (thangDongBhyt === thangHienTai) {
+          return false; // Nếu đóng trong tháng hiện tại thì loại luôn
+        }
+        hanTheBhyt = moment(item.ngayBienLaiBhyt, "YYYY-MM-DD").add(
+          12,
+          "months"
+        );
+      }
+
+      // Nếu cả 2 trường đều không có thì loại
+      if (!hanTheBhyt || !hanTheBhyt.isValid()) return false;
 
       if (filterType === "QUA_HAN_90") {
         return hanTheBhyt.isBefore(mocQuaHan90Ngay);
@@ -259,8 +288,6 @@ const filteredRows = computed(() => {
       const trungGhiChu =
         item.ghiChu && item.ghiChu.toLowerCase().includes(tuKhoa);
 
-      // Lưu ý: Đoạn return gốc của bạn chỉ check 3 biến đầu,
-      // nếu bạn muốn tìm kiếm trên tất cả các trường đã khai báo ở trên thì mở rộng điều kiện OR dưới đây:
       return (
         trungTen ||
         trungSdt ||
@@ -268,7 +295,7 @@ const filteredRows = computed(() => {
         trungMaHoGiaDinh ||
         trungMaToKhaiRieng ||
         trungGhiChu
-      );
+      );``
     });
   }
 

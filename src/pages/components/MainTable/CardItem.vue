@@ -242,6 +242,7 @@
               <div>
                 <strong>Đóng: {{ item.phuongThucDong || "" }}</strong> (tháng)
               </div>
+              <div>{{ item.nhanVienThu}}</div>
             </div>
           </template>
           <template v-else-if="item.soTienBhyt">
@@ -259,6 +260,7 @@
             <div class="text-caption text-grey-7">
               Ngày nộp: {{ formatNgayBienLai(item.ngayBienLaiBhyt) }}
             </div>
+            <div>{{ item.nhanVienThu}}</div>
             <div>
               <q-badge
                 :color="
