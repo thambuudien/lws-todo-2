@@ -224,6 +224,12 @@ const filteredRows = computed(() => {
       }
 
       const hasValidPhuongThuc = [1, 3, 6, 12].includes(phuongThuc);
+      const soThangChoPhepMap = {
+        0: 0,
+        3: 3,
+        6: 4,
+        12: 7,
+      };
 
       if (ngayDongBHXH && hasValidPhuongThuc) {
         const thangDongBhxh = ngayDongBHXH.substring(0, 7);
@@ -257,7 +263,10 @@ const filteredRows = computed(() => {
           thoiDiemHienTai.isSame(ngayHetHanBhxh, "month") ||
           (thoiDiemHienTai.isAfter(ngayHetHanBhxh, "month") &&
             thoiDiemHienTai.isSameOrBefore(
-              moment(ngayHetHanBhxh).add(phuongThuc, "month"),
+              moment(ngayHetHanBhxh).add(
+                soThangChoPhepMap[phuongThuc],
+                "month"
+              ),
               "month"
             ))
         );
