@@ -187,7 +187,10 @@ const filteredRows = computed(() => {
   if (!rawRows.value || rawRows.value.length === 0) return [];
 
   const homNay = moment();
-  const thangHienTai = homNay.format("YYYY-MM"); // Định dạng "YYYY-MM"
+  const thangHienTai = homNay.format("YYYY-MM");
+  const thoiDiemHienTai = moment(thangHienTai + "-01", "YYYY-MM-DD");
+
+  // Mốc 90 ngày cho BHYT
   const mocQuaHan90Ngay = moment(homNay).subtract(90, "days");
   const mocCuoiThangTiepTheo = moment(homNay).add(1, "month").endOf("month");
 
@@ -195,7 +198,6 @@ const filteredRows = computed(() => {
   const filterType = activeFilter.value;
   const tuKhoa = searchText.value.trim().toLowerCase();
 
-  // BƯỚC 1: LỌC THEO CHIẾN DỊCH VÀ PHÂN HỆ ĐIỀU HƯỚNG
   let ketQua = rawRows.value.filter((item) => {
     // Nếu tích chọn BHXH mà không có tiền đóng -> Loại luôn
     if (isBhxh && item.soTienBhxh === 0) return false;
@@ -210,11 +212,10 @@ const filteredRows = computed(() => {
     }
 
     if (isBhxh) {
-      // --- PHÂN HỆ BHXH TỰ NGUYỆN (Ưu tiên ngày đóng tiền + phương thức đóng số) ---
+      // --- PHÂN HỆ BHXH TỰ NGUYỆN ---
       let ngayHetHanBhxh = null;
       const ngayDongBHXH = item.ngayBienLaiBhxh;
 
-      // Trích xuất lấy ra số từ chuỗi phương thức đóng (ví dụ: "3 tháng" -> 3)
       let phuongThuc = 0;
       if (item.phuongThucDong !== undefined && item.phuongThucDong !== null) {
         const match = String(item.phuongThucDong).match(/\d+/);
@@ -233,19 +234,14 @@ const filteredRows = computed(() => {
 
       if (ngayDongBHXH && hasValidPhuongThuc) {
         const thangDongBhxh = ngayDongBHXH.substring(0, 7);
-
-        // Nếu đã đóng trong tháng hiện tại -> Đã hoàn tất, loại ra luôn
         if (thangDongBhxh === thangHienTai) {
-          return false;
+          return false; // Đã đóng trong tháng hiện tại -> xong
         }
-
-        // Tính mốc hết hạn dựa trên ngày biên lai + số tháng phương thức đóng
         ngayHetHanBhxh = moment(ngayDongBHXH, "YYYY-MM-DD").add(
           phuongThuc,
           "months"
         );
       } else {
-        // Fallback: Nếu không có ngày biên lai hoặc phương thức đóng không hợp lệ thì dùng mốc nhắc đóng
         if (!item.nhacDongBhxh) return false;
         const mocThangBhxh = item.nhacDongBhxh.substring(0, 7);
         ngayHetHanBhxh = moment(mocThangBhxh + "-01", "YYYY-MM-DD");
@@ -253,26 +249,29 @@ const filteredRows = computed(() => {
 
       if (!ngayHetHanBhxh || !ngayHetHanBhxh.isValid()) return false;
 
-      const thoiDiemHienTai = moment(thangHienTai + "-01", "YYYY-MM-DD");
+      // Số tháng cho phép gia hạn thêm tùy theo phương thức đóng
+      const soThangChoPhep = soThangChoPhepMap[phuongThuc] || 0;
 
-      if (filterType === "QUA_HAN_90") {
-        return thoiDiemHienTai.isAfter(ngayHetHanBhxh, "month");
-      }
+      // Thời điểm giới hạn cuối cùng còn được coi là "Cần gia hạn" (Hết hạn + số tháng cho phép)
+      const hanCuoiGiaHan = moment(ngayHetHanBhxh).add(
+        soThangChoPhep,
+        "months"
+      );
+
+      // XỬ LÝ CÁC BỘ LỌC CHO BHXH:
       if (filterType === "CAN_GIA_HAN") {
+        // Cần gia hạn: Đã đến hạn hoặc đang trong thời gian chậm đóng cho phép (chưa quá hạn sâu)
         return (
-          thoiDiemHienTai.isSame(ngayHetHanBhxh, "month") ||
-          (thoiDiemHienTai.isAfter(ngayHetHanBhxh, "month") &&
-            thoiDiemHienTai.isSameOrBefore(
-              moment(ngayHetHanBhxh).add(
-                soThangChoPhepMap[phuongThuc],
-                "month"
-              ),
-              "month"
-            ))
+          thoiDiemHienTai.isSame(ngayHetHanBhxh, "month")
         );
       }
+
+      if (filterType === "QUA_HAN_90" || filterType === "QUA_HAN") {
+        // Quá hạn (bao gồm cả quá hạn từ năm trước): Vượt quá thời hạn cho phép gia hạn
+        return thoiDiemHienTai.isAfter(hanCuoiGiaHan, "month");
+      }
     } else {
-      // --- PHÂN HỆ BHYT (Ưu tiên bhytDenNgay, nếu không có lấy ngày nộp tiền + 12 tháng) ---
+      // --- PHÂN HỆ BHYT ---
       let hanTheBhyt = null;
 
       if (item.bhytDenNgay) {
