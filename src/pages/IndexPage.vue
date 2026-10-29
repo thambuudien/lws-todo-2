@@ -212,15 +212,18 @@ const filteredRows = computed(() => {
     if (isBhxh) {
       // Phân hệ BHXH Tự nguyện
       const ngayKiemTraStr = item.nhacDongBhxh;
-      if (!ngayKiemTraStr) return false;
+      const ngayDongBHXH = item.ngayBienLaiBhxh
+      if (!ngayKiemTraStr || !ngayDongBHXH) return false;
 
       const mocThangBhxh = ngayKiemTraStr.substring(0, 7); // Tối ưu hơn moment().format nếu format sẵn YYYY-MM-DD
+      const thangDongBhxh = ngayDongBHXH.substring(0, 7);
+
 
       if (filterType === "QUA_HAN_90") {
         return mocThangBhxh < thangHienTai;
       }
       if (filterType === "CAN_GIA_HAN") {
-        return mocThangBhxh === thangHienTai;
+        return mocThangBhxh === thangHienTai && thangDongBhxh === thangHienTai;
       }
     } else {
       // Phân hệ BHYT
