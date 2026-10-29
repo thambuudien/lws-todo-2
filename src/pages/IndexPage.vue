@@ -215,7 +215,7 @@ const filteredRows = computed(() => {
       const ngayDongBHXH = item.ngayBienLaiBhxh;
 
       // Trích xuất lấy ra số từ chuỗi phương thức đóng (ví dụ: "3 tháng" -> 3)
-      let phuongThuc = 1;
+      let phuongThuc = 0;
       if (item.phuongThucDong !== undefined && item.phuongThucDong !== null) {
         const match = String(item.phuongThucDong).match(/\d+/);
         if (match) {
@@ -257,7 +257,7 @@ const filteredRows = computed(() => {
           thoiDiemHienTai.isSame(ngayHetHanBhxh, "month") ||
           (thoiDiemHienTai.isAfter(ngayHetHanBhxh, "month") &&
             thoiDiemHienTai.isSameOrBefore(
-              moment(ngayHetHanBhxh).add(1, "month"),
+              moment(ngayHetHanBhxh).add(phuongThuc, "month"),
               "month"
             ))
         );

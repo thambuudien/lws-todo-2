@@ -35,6 +35,8 @@ export const KHACH_HANG_FIELDS_FRAGMENT = gql`
     soTienBhxh
     ngayBienLaiBhyt
     ngayBienLaiBhxh
+    userName
+    nhanVienThu
 
     sdtDongTien
     sdtNhacHan
