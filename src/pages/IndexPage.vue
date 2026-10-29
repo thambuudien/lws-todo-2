@@ -210,53 +210,58 @@ const filteredRows = computed(() => {
     }
 
     if (isBhxh) {
-      // --- PHÂN HỆ BHXH TỰ NGUYỆN ---
+      // --- PHÂN HỆ BHXH TỰ NGUYỆN (Ưu tiên ngày đóng tiền + phương thức đóng) ---
+      let ngayHetHanBhxh = null;
       const ngayDongBHXH = item.ngayBienLaiBhxh;
-      if (!ngayDongBHXH) return false;
+      const phuongThuc = Number(item.phuongThucDong);
 
-      const thangDongBhxh = ngayDongBHXH.substring(0, 7);
+      // Kiểm tra xem phương thức đóng có hợp lệ không (thường là 1, 3, 6, 12)
+      const hasValidPhuongThuc = [1, 3, 6, 12].includes(phuongThuc);
 
-      // Nếu vừa đóng trong tháng hiện tại -> Đã đóng xong, loại ra
-      if (thangDongBhxh === thangHienTai) {
-        return false;
+      if (ngayDongBHXH && hasValidPhuongThuc) {
+        const thangDongBhxh = ngayDongBHXH.substring(0, 7);
+
+        // Nếu đã đóng trong tháng hiện tại -> Đã hoàn tất, loại ra luôn
+        if (thangDongBhxh === thangHienTai) {
+          return false;
+        }
+
+        // Tính mốc hết hạn dựa trên ngày biên lai + số tháng phương thức đóng
+        ngayHetHanBhxh = moment(ngayDongBHXH, "YYYY-MM-DD").add(phuongThuc, "months");
+      } else {
+        // Fallback: Nếu không có ngày biên lai hoặc phương thức đóng không hợp lệ thì dùng mốc nhắc đóng (nhacDongBhxh)
+        if (!item.nhacDongBhxh) return false;
+        const mocThangBhxh = item.nhacDongBhxh.substring(0, 7);
+        ngayHetHanBhxh = moment(mocThangBhxh + "-01", "YYYY-MM-DD");
       }
 
-      const phuongThuc = Number(item.phuongThucDong) || 1; // 1, 3, 6, 12 tháng
-      const ngayHetHanBhxh = moment(ngayDongBHXH, "YYYY-MM-DD").add(
-        phuongThuc,
-        "months"
-      );
+      if (!ngayHetHanBhxh || !ngayHetHanBhxh.isValid()) return false;
+
+      const thoiDiemHienTai = moment(thangHienTai + "-01", "YYYY-MM-DD");
 
       if (filterType === "QUA_HAN_90") {
-        return homNay.isAfter(ngayHetHanBhxh);
+        // Quá hạn: Ngày hết hạn thực tế đã qua so với hiện tại
+        return thoiDiemHienTai.isAfter(ngayHetHanBhxh, "month");
       }
       if (filterType === "CAN_GIA_HAN") {
-        const mocCanGiaHan = moment(ngayHetHanBhxh).subtract(30, "days");
-        return (
-          homNay.isSameOrAfter(mocCanGiaHan) &&
-          homNay.isSameOrBefore(ngayHetHanBhxh)
-        );
+        // Cần gia hạn: Đang ở trong tháng hết hạn hoặc chuẩn bị hết hạn
+        return thoiDiemHienTai.isSame(ngayHetHanBhxh, "month") || (thoiDiemHienTai.isAfter(ngayHetHanBhxh, "month") && thoiDiemHienTai.isSameOrBefore(moment(ngayHetHanBhxh).add(1, "month"), "month"));
       }
+
     } else {
-      // --- PHÂN HỆ BHYT ---
+      // --- PHÂN HỆ BHYT (Ưu tiên bhytDenNgay, nếu không có lấy ngày nộp tiền + 12 tháng) ---
       let hanTheBhyt = null;
 
       if (item.bhytDenNgay) {
-        // Ưu tiên 1: Lấy theo bhytDenNgay nếu có
         hanTheBhyt = moment(item.bhytDenNgay, "YYYY-MM-DD");
       } else if (item.ngayBienLaiBhyt) {
-        // Ưu tiên 2: Nếu không có bhytDenNgay, lấy ngày nộp tiền cộng thêm 12 tháng (mặc định thẻ BHYT 1 năm)
         const thangDongBhyt = item.ngayBienLaiBhyt.substring(0, 7);
         if (thangDongBhyt === thangHienTai) {
-          return false; // Nếu đóng trong tháng hiện tại thì loại luôn
+          return false; // Đã đóng trong tháng hiện tại -> loại ra
         }
-        hanTheBhyt = moment(item.ngayBienLaiBhyt, "YYYY-MM-DD").add(
-          12,
-          "months"
-        );
+        hanTheBhyt = moment(item.ngayBienLaiBhyt, "YYYY-MM-DD").add(12, "months");
       }
 
-      // Nếu cả 2 trường đều không có thì loại
       if (!hanTheBhyt || !hanTheBhyt.isValid()) return false;
 
       if (filterType === "QUA_HAN_90") {
@@ -295,7 +300,7 @@ const filteredRows = computed(() => {
         trungMaHoGiaDinh ||
         trungMaToKhaiRieng ||
         trungGhiChu
-      );``
+      );
     });
   }
 
