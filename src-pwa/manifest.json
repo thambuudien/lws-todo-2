@@ -1,7 +1,11 @@
 {
+  "name": "ANLO - Sổ nhắc tái tục bảo hiểm",
+  "short_name": "ANLO",
+  "description": "Ứng dụng quản lý và nhắc tái tục BHYT, BHXH của Long Web Studio",
+  "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#027be3",
+  "theme_color": "#1976D2",
   "icons": [
     {
       "src": "icons/icon-128x128.png",

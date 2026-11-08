@@ -4,7 +4,7 @@
     <div class="row q-col-gutter-xs q-mb-sm">
       <div class="col-6">
         <q-btn
-          :color="isBhxhMode ? 'green-8' : 'indigo-7'"
+          :color="isBhxhMode ? 'teal-8' : 'blue-8'"
           icon="chat"
           :label="isBhxhMode ? 'Zalo nhắc BHXH' : 'Zalo nhắc BHYT'"
           no-caps
@@ -16,7 +16,7 @@
       </div>
       <div class="col-6">
         <q-btn
-          :color="isBhxhMode ? 'green-10' : 'teal-7'"
+          :color="isBhxhMode ? 'teal-10' : 'light-blue-9'"
           icon="sms"
           :label="isBhxhMode ? 'SMS nhắc BHXH' : 'SMS nhắc BHYT'"
           no-caps
@@ -44,7 +44,7 @@
       </div>
       <div class="col-6">
         <q-btn
-          color="orange-9"
+          color="blue-grey-8"
           icon="find_in_page"
           label="Tra cứu thông tin (SSM)"
           no-caps
@@ -213,7 +213,7 @@
         </div>
 
         <div class="q-mt-sm border-top-dash q-pt-xs">
-          <strong>Ghi chú chi tiết của đại lý thu:</strong>
+          <strong>Ghi chú chi tiết của tư vấn viên:</strong>
           <div
             class="text-italic text-grey-8 bg-grey-2 q-pa-xs rounded-borders q-mt-xs text-justify"
           >
