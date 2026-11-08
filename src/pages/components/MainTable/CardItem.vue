@@ -85,13 +85,7 @@
             dense
             size="sm"
             icon="content_copy"
-            @click.stop="
-              copy(
-                `${item.hoTen}, ${item.maSoBhxh}, ${new Date(
-                  item.ngaySinh
-                ).toLocaleDateString('vi-VN')}, `
-              )
-            "
+            @click.stop="copyInfo(item)"
             class="q-ml-xs"
           />
         </q-item-label>
@@ -114,9 +108,8 @@
             {{ item.ngay5NamLienTuc || "Chưa cập nhật" }}
           </div>
           <div>
-
             <strong>Số ĐT: </strong>
-              <a :href="`tel:${item.soDienThoai}`"
+            <a :href="`tel:${item.soDienThoai}`"
               >{{ maskPhoneNumber(item.soDienThoai) }}
             </a>
             <q-btn
@@ -130,7 +123,6 @@
               class="q-ml-sm"
               @click.stop="copy(item.soDienThoai)"
             />
-
           </div>
         </q-item-label>
 
@@ -242,7 +234,7 @@
               <div>
                 <strong>Đóng: {{ item.phuongThucDong || "" }}</strong> (tháng)
               </div>
-              <div>{{ item.nhanVienThu}}</div>
+              <div>{{ item.nhanVienThu }}</div>
             </div>
           </template>
           <template v-else-if="item.soTienBhyt">
@@ -260,7 +252,7 @@
             <div class="text-caption text-grey-7">
               Ngày nộp: {{ formatNgayBienLai(item.ngayBienLaiBhyt) }}
             </div>
-            <div>{{ item.nhanVienThu}}</div>
+            <div>{{ item.nhanVienThu }}</div>
             <div>
               <q-badge
                 :color="
@@ -425,22 +417,39 @@ const getDynamicColorBhxh = (item) => {
   }
 };
 
-const copy = (text) => {
-  copyToClipboard(text)
-    .then(() => {
-      $q.notify({
-        color: "positive",
-        message: `Đã sao chép vào clipboard: ${text}`,
-        icon: "content_copy",
-      });
-    })
-    .catch(() => {
-      $q.notify({
-        color: "negative",
-        message: "Lỗi sao chép",
-        icon: "report_problem",
-      });
+// Hàm định dạng ngày tháng chuẩn 2 chữ số (DD/MM/YYYY)
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  return new Date(dateString).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+// Hàm chuẩn bị chuỗi thông tin cá nhân để sao chép
+const copyInfo = (item) => {
+  const formattedDate = formatDate(item.ngaySinh);
+  const textToCopy = `${item.hoTen}, ${item.maSoBhxh}, ${formattedDate}, `;
+  copy(textToCopy);
+};
+
+// Hàm sao chép cốt lõi được tối ưu bằng async/await
+const copy = async (text) => {
+  try {
+    await copyToClipboard(text);
+    $q.notify({
+      color: "positive",
+      message: `Đã sao chép: ${text}`,
+      icon: "content_copy",
     });
+  } catch (error) {
+    $q.notify({
+      color: "negative",
+      message: "Lỗi sao chép vào bộ nhớ tạm",
+      icon: "report_problem",
+    });
+  }
 };
 
 const openPviWindow = (bhyt, type) => {
