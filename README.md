@@ -2,7 +2,7 @@
 
 **ANLO** là một ứng dụng web PWA (Progressive Web App) được phát triển bởi **Freelancer Long Web Studio**, chuyên dùng cho các nhân viên tư vấn và tổ chức dịch vụ thu an sinh xã hội. Công cụ này giúp quản lý và gửi thông báo nhắc tái tục, gia hạn thẻ Bảo hiểm Y tế (BHYT) và Bảo hiểm Xã hội (BHXH) tự nguyện một cách hiệu quả và chuyên nghiệp.
 
-[![Website](https://img.shields.io/badge/Website-Live_Demo-blue?style=flat-square)](https://lws-todo-2.web.app/) [![Facebook](https://img.shields.io/badge/Facebook-Long_Web_Studio-blue?style=flat-square)](https://fb.com/sothubaohiem)
+[![Website](https://img.shields.io/badge/Website-Live_Demo-blue?style=flat-square)](https://anlo.longwebstudio.io.vn/) [![Facebook](https://img.shields.io/badge/Facebook-Long_Web_Studio-blue?style=flat-square)](https://fb.com/sothubaohiem)
 
 ---
 

@@ -15,7 +15,7 @@ module.exports = configure(function (/* ctx */) {
       errors: true,
     },
 
-    boot: ["apollo"],
+    boot: ["apollo", "gtm", "redirect"], // <-- ĐÃ THÊM REDIRECT BOOT FILE
 
     css: ["app.scss"],
 
@@ -57,7 +57,7 @@ module.exports = configure(function (/* ctx */) {
     framework: {
       config: {},
       lang: "vi",
-      plugins: ["Notify", "Dialog"],
+      plugins: ["Notify", "Dialog", "LocalStorage"], // <-- ĐÃ THÊM LOCALSTORAGE PLUGIN
     },
 
     animations: [],
