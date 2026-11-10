@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
+    <meta name="color-scheme" content="light only" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ANLO - Sổ nhắc tái tục BHYT, BHXH tự nguyện | Long Web Studio</title>
     <meta
@@ -599,7 +600,7 @@ Make sure disabled buttons don't get the pointer cursor.
       /*
 1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
 2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
-   This can trigger a poorly considered lint error in some tools but is included by design.
+This can trigger a poorly considered lint error in some tools but is included by design.
 */
 
       img,
@@ -665,7 +666,7 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
       }
 
       .-bottom-2 {
-        bottom: -0.5rem;
+        bottom: -3.5rem;
       }
 
       .-bottom-20 {
@@ -2018,17 +2019,17 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
         --green: #149d72;
       }
 
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --surface: #0b2a4a;
-          --surface-2: #0e355e;
-          --surface-3: #123f68;
-          --ink: #f7fafc;
-          --muted: #b8c9d7;
-          --line: #274b6e;
-          --yellow-soft: #3b351b;
-        }
+      /* FIX DARK MODE - ANLO: khóa luôn Light Mode.
+   Lỗi cũ: block @media dark bên dưới đổi --surface thành navy đậm #0b2a4a
+   nhưng các class text-[var(--navy)] / bg-white / text-slate-... vẫn giữ màu sáng,
+   nên chữ navy chìm trên nền navy, chữ trắng chìm trên nền trắng. */
+      html {
+        color-scheme: light only;
       }
+      :root {
+        color-scheme: light only;
+      }
+      /* Đã XÓA block @media (prefers-color-scheme: dark) cũ - không cho trình duyệt tự đổi nền. */
 
       * {
         box-sizing: border-box;
@@ -2419,6 +2420,24 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 
         .lg\:text-\[66px\] {
           font-size: 66px;
+        }
+      }
+
+      /* --- ANLO FIX: chống trình duyệt / điện thoại ép dark mode --- */
+      @media (prefers-color-scheme: dark) {
+        html,
+        body {
+          background: #f4f7fa !important;
+          color: #0f2a4d !important;
+        }
+        :root {
+          --surface: #ffffff !important;
+          --surface-2: #f4f7fa !important;
+          --surface-3: #eaf2f1 !important;
+          --ink: #0f2a4d !important;
+          --muted: #5e7186 !important;
+          --line: #dde7ee !important;
+          --yellow-soft: #fff3d1 !important;
         }
       }
     </style>
