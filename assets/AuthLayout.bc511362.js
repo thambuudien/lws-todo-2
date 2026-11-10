@@ -1,1 +1,0 @@
-import{a,b as n}from"./QLayout.d1cc0040.js";import{_ as r,ba as s,R as u,S as c,T as _,U as e,V as t}from"./index.a1ea5675.js";const p=s({name:"AuthLayout"});function f(i,l,m,d,h,v){const o=u("router-view");return c(),_(a,null,{default:e(()=>[t(n,null,{default:e(()=>[t(o)]),_:1})]),_:1})}var $=r(p,[["render",f]]);export{$ as default};
